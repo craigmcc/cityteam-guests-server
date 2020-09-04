@@ -1,0 +1,169 @@
+"use strict";
+
+// Internal Modules ----------------------------------------------------------
+
+const BadRequest = require("../errors/BadRequest");
+const NotFound = require("../errors/NotFound");
+const db = require("../models");
+const Facility = db.Facility;
+const fields = [
+    "active",
+    "address1",
+    "address2",
+    "city",
+    "email",
+    "name",
+    "phone",
+    "state",
+    "zipCode"
+]
+
+// External Modules ----------------------------------------------------------
+
+const Op = db.Sequelize.Op;
+
+// Model Specific Methods (no id) --------------------------------------------
+
+exports.findByActive = async () => {
+    let conditions = {
+        order: [ ["name", "ASC"] ],
+        where: { active: true  }
+    }
+    return await Facility.findAll(conditions);
+}
+
+exports.findByName = async (name) => {
+    let conditions = {
+        order: [ ["name", "ASC"] ],
+        where: {
+            name: { [Op.iLike]: `%${name}%` }
+        }
+    }
+    return await Facility.findAll(conditions);
+}
+
+exports.findByNameExact = async (name) => {
+    let conditions = {
+        order: [ ["name", "ASC"] ],
+        where: { name: name }
+    }
+    let results = await Facility.findAll(conditions);
+    if (results.length > 0) {
+        return results[0];
+    } else {
+        throw new NotFound(`name: Missing name ${name}`)
+    }
+}
+
+// Standard CRUD Methods -----------------------------------------------------
+
+exports.all = async () => {
+    let conditions = {
+        order: [ ["name", "ASC"] ]
+    }
+    return await Facility.findAll(conditions);
+}
+
+exports.find = async (id) => {
+    let result = await Facility.findByPk(id);
+    if (result === null) {
+        throw new NotFound(`id: Missing Facility ${id}`);
+    } else {
+        return result;
+    }
+}
+
+exports.insert = async (data) => {
+    let transaction;
+    try {
+        transaction = await db.sequelize.transaction();
+        let result = await Facility.create(data, {
+            fields: fields,
+            transaction: transaction
+        });
+        await transaction.commit();
+        return result;
+    } catch (err) {
+        if (transaction) {
+            await transaction.rollback();
+        }
+        throw err;
+    }
+}
+
+exports.remove = async (id) => {
+    let result = await Facility.findByPk(id);
+    if (result == null) {
+        throw new NotFound(`id: Missing Facility ${id}`);
+    }
+    let num = await Facility.destroy({
+        where: { id: id }
+    });
+    if (num !== 1) {
+        throw new NotFound(`id: Cannot remove Facility ${id}`);
+    }
+    return result;
+}
+
+exports.update = async (id, data) => {
+    let transaction;
+    try {
+        transaction = await db.sequelize.transaction();
+        data.id = id;
+        let fieldsPlusId = [...fields];
+        fieldsPlusId.push("id");
+        let count = await Facility.update(data, {
+            fields: fieldsPlusId,
+            transaction: transaction,
+            where: {id: id}
+        });
+        if (count[0] === 0) {
+            throw new NotFound(`id: Missing Facility ${id}`);
+        }
+        await transaction.commit();
+        return await Facility.findByPk(id);
+    } catch (err) {
+        if (transaction) {
+            await transaction.rollback();
+        }
+        if (err instanceof db.Sequelize.ValidationError) {
+            throw new BadRequest(err.message);
+        } else {
+            throw err;
+        }
+    }
+}
+
+// Model Specific Methods ----------------------------------------------------
+
+exports.findGuestsByFacilityId = async (id) => {
+    // TODO - findGuestsByFacilityId(id)
+}
+
+exports.findGuestsByName = async (id, name, offset, limit) => {
+    // TODO - findGuestsByName(id, name, offset, limit)
+}
+
+exports.findGuestsByNameExact = async (id, firstName, lastName) => {
+    // TODO - findGuestsByNameExact(id, firstName, lastName)
+}
+
+exports.findRegistrationsByFacilityAndDate = async(id, registrationDate) => {
+    // TODO - findRegistrationsByFacilityAndDate(id, registrationDate)
+}
+
+exports.findTemplatesByFacilityId = async (id) => {
+    // TODO - findTemplatesByFacilityId(id)
+}
+
+exports.findTemplatesByName = async (id, name) => {
+    // TODO - findTemplatesByName(id, name);
+}
+
+exports.findTemplatesByNameExact = async (id, name) => {
+    // TODO - findTemplatesByNameExact(id, name);
+}
+
+exports.removeRegistrationsByFacilityAndDate = async (id, registrationDate) => {
+    // TODO - removeRegistrationsByFacilityAndDate(id, registrationDate)
+}
