@@ -425,7 +425,7 @@ describe("FacilityServices Tests", () => {
 
     });
 
-    describe.skip("#update()", () => {
+    describe("#update()", () => {
 
         context("with invalid arguments", () => {
 
@@ -436,13 +436,29 @@ describe("FacilityServices Tests", () => {
                 let data1 = await Facility.create(dataset.facility1full);
                 let data2 = await Facility.create(dataset.facility2full);
                 let duplicateName = data1.name;
+                let newData = {...dataset.facility2full}
                 try {
-                    data2.name = duplicateName;
-                    let result = await FacilityServices.update(data2.id, data2);
+                    newData.name = duplicateName;
+                    await FacilityServices.update(data2.id, newData);
                     expect.fail("Should have thrown validation error");
                 } catch (err) {
                     expect(err.message)
                         .include(`name: Name '${duplicateName}' is already in use`);
+                }
+
+            });
+
+            it("should fail with invalid id", async () => {
+
+                let data = await Facility.create(dataset.facility1full);
+                let invalidId = 9999;
+                try {
+                    data.id = null;
+                    await FacilityServices.update(invalidId, data);
+                    expect.fail("Should have thrown not found error");
+                } catch (err) {
+                    expect(err.message)
+                        .include(`id: Missing Facility ${invalidId}`);
                 }
 
             });
@@ -453,9 +469,12 @@ describe("FacilityServices Tests", () => {
 
             it("should succeed with no changes", async () => {
 
-                let data = await Facility.create(dataset.facility1full);
+                let result0 = await Facility.create(dataset.facility1full);
+                let data = {
+                    ...dataset.facility1full
+                }
                 try {
-                    let result = await FacilityServices.update(data.id, data);
+                    let result = await FacilityServices.update(result0.id, data);
                     expect(result.name).to.equal(data.name);
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);
@@ -465,11 +484,14 @@ describe("FacilityServices Tests", () => {
 
             it("should succeed with unique name", async () => {
 
-                let data = await Facility.create(dataset.facility1full);
+                let result0 = await Facility.create(dataset.facility1full);
+                let data = {
+                    ...dataset.facility1full
+                }
                 try {
                     let uniqueName = "New Unique Name";
                     data.name = uniqueName;
-                    let result = await FacilityServices.update(data.id, data);
+                    let result = await FacilityServices.update(result0.id, data);
                     expect(result.name).to.equal(uniqueName);
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);

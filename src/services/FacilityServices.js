@@ -17,6 +17,7 @@ const fields = [
     "state",
     "zipCode"
 ]
+const fieldsWithId = [...fields, "id"];
 
 // External Modules ----------------------------------------------------------
 
@@ -106,22 +107,25 @@ exports.remove = async (id) => {
 }
 
 exports.update = async (id, data) => {
+    let original = await Facility.findByPk(id);
+    if (original === null) {
+        throw new NotFound(`id: Missing Facility ${id}`);
+    }
     let transaction;
     try {
         transaction = await db.sequelize.transaction();
         data.id = id;
-        let fieldsPlusId = [...fields];
-        fieldsPlusId.push("id");
-        let count = await Facility.update(data, {
-            fields: fieldsPlusId,
+        let result = await Facility.update(data, {
+            fields: fieldsWithId,
             transaction: transaction,
-            where: {id: id}
+            where: { id: id }
         });
-        if (count[0] === 0) {
-            throw new NotFound(`id: Missing Facility ${id}`);
+        if (result[0] === 0) {
+            throw new Error("id: Update did not occur for id " + id);
         }
         await transaction.commit();
-        return await Facility.findByPk(id);
+        transaction = null;
+        return Facility.findByPk(id);
     } catch (err) {
         if (transaction) {
             await transaction.rollback();
@@ -132,6 +136,7 @@ exports.update = async (id, data) => {
             throw err;
         }
     }
+
 }
 
 // Model Specific Methods ----------------------------------------------------
