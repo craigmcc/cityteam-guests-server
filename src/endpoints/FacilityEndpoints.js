@@ -6,6 +6,7 @@ const BadRequest = require("../errors/BadRequest");
 const NotFound = require("../errors/NotFound");
 const db = require("../models");
 const FacilityServices = require("../services/FacilityServices");
+const TemplateServices = require("../services/TemplateServices");
 
 // External Modules ----------------------------------------------------------
 
@@ -128,6 +129,41 @@ module.exports = (app) => {
     })
 
     // Model Specific Endpoints ----------------------------------------------
+
+    // GET /:id/templates - Find templates by id
+    router.get("/:id/templates", async (req, res) => {
+        try {
+            res.send(await TemplateServices.findByFacilityId(req.params.id));
+        } catch (err) {
+            console.error("FacilityEndpoints.findTemplatesByFacilityId error: " +
+                JSON.stringify(err, null, 2));
+            res.status(500).send(err.message);
+        }
+    });
+
+    // GET /:id/templates/name/:name - Find templates by id and name segment match
+    router.get("/:id/templates/name/:name", async (req, res) => {
+        try {
+            res.send(await TemplateServices.findByFacilityIdAndName
+                (req.params.id, req.params.name));
+        } catch (err) {
+            console.error("FacilityEndpoints.findTemplatesByFacilityIdAndName error: " +
+                JSON.stringify(err, null, 2));
+            res.status(500).send(err.message);
+        }
+    });
+
+    // GET /:id/templates/nameExact/:name - Find templates by id and name
+    router.get("/:id/templates/nameExact/:name", async (req, res) => {
+        try {
+            res.send(await TemplateServices.findByFacilityIdAndNameExact
+                (req.params.id, req.params.name));
+        } catch (err) {
+            console.error("FacilityEndpoints.findTemplatesByFacilityIdAndNameExact error: " +
+                JSON.stringify(err, null, 2));
+            res.status(500).send(err.message);
+        }
+    });
 
     // Export Routes ---------------------------------------------------------
 

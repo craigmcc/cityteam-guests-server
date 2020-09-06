@@ -34,6 +34,7 @@ app.get("/", (req, res) => {
 
 // TODO - Configure Routes
 require("./src/endpoints/FacilityEndpoints")(app);
+require("./src/endpoints/TemplateEndpoints")(app);
 
 // Start Server --------------------------------------------------------------
 

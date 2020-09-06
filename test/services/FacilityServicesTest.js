@@ -6,7 +6,7 @@ const db = require("../../src/models");
 const Facility = db.Facility;
 const FacilityServices = require("../../src/services/FacilityServices");
 
-// External Models -----------------------------------------------------------
+// External Modules ----------------------------------------------------------
 
 const chai = require("chai");
 const expect = chai.expect;
@@ -14,41 +14,46 @@ const expect = chai.expect;
 // Test Data -----------------------------------------------------------------
 
 const dataset = {
+
     facility1full: {
-        name: 'First Facility',
         active: true,
-        address1: 'First Address 1 Controller',
+        address1: 'First Address 1 Facility',
         address2: 'First Address 2',
         city: 'First City',
+        name: 'First Facility',
         state: 'OR',
         zipCode: '99999'
     },
+
     facility1noName: {
         active: true,
-        address1: 'First Address 1 Controller',
+        address1: 'First Address 1 Facility',
         address2: 'First Address 2',
         city: 'First City',
         state: 'OR',
         zipCode: '99999'
     },
+
     facility2full: {
-        name: 'Second Facility',
         active: true,
-        address1: 'Second Address 1 Controller',
+        address1: 'Second Address 1 Facility',
         address2: 'Second Address 2',
         city: 'Second City',
+        name: 'Second Facility',
         state: 'WA',
         zipCode: '88888'
     },
+
     facility3full: {
         name: 'Third Facility',
         active: true,
-        address1: 'Third Address 1 Controller',
+        address1: 'Third Address 1 Facility',
         address2: 'Third Address 2',
         city: 'Third City',
         state: 'CA',
         zipCode: '77777'
     }
+
 };
 
 // FacilityServices Tests ----------------------------------------------------
@@ -74,7 +79,7 @@ describe("FacilityServices Tests", () => {
 
     describe("#all()", () => {
 
-        context("all objects", async () => {
+        context("all objects", () => {
 
             it("should find all objects", async () => {
 
@@ -94,7 +99,7 @@ describe("FacilityServices Tests", () => {
 
         });
 
-        context("no objects", async () => {
+        context("no objects", () => {
 
             it("should find no objects", async () => {
 
@@ -138,6 +143,7 @@ describe("FacilityServices Tests", () => {
         });
 
     });
+
     describe("#findByActive()", () => {
 
         context("all active objects", () => {
@@ -443,7 +449,7 @@ describe("FacilityServices Tests", () => {
                     expect.fail("Should have thrown validation error");
                 } catch (err) {
                     expect(err.message)
-                        .include(`name: Name '${duplicateName}' is already in use`);
+                        .includes(`name: Name '${duplicateName}' is already in use`);
                 }
 
             });
@@ -453,12 +459,11 @@ describe("FacilityServices Tests", () => {
                 let data = await Facility.create(dataset.facility1full);
                 let invalidId = 9999;
                 try {
-                    data.id = null;
                     await FacilityServices.update(invalidId, data);
                     expect.fail("Should have thrown not found error");
                 } catch (err) {
                     expect(err.message)
-                        .include(`id: Missing Facility ${invalidId}`);
+                        .includes(`id: Missing Facility ${invalidId}`);
                 }
 
             });

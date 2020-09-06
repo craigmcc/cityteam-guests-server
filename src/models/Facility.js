@@ -61,7 +61,7 @@ module.exports = (sequelize) => {
                     Facility.count(conditions)
                         .then(found => {
                             return (found !== 0)
-                                ? next("name: Name '" + value + "' is already in use")
+                                ? next(`name: Name '${value}' is already in use`)
                                 : next();
                         })
                         .catch(next);
@@ -127,17 +127,18 @@ module.exports = (sequelize) => {
 
     });
 
-// Facility Associations -----------------------------------------------------
+    // Facility Associations -------------------------------------------------
 
     Facility.associate = function (models) {
 /*
         models.Facility.hasMany(models.Guest);
         models.Facility.hasMany(models.Registration);
-        models.Facility.hasMany(models.Template);
 */
+        models.Facility.hasMany(models.Template);
+
     };
 
-// Export Model --------------------------------------------------------------
+    // Export Model ----------------------------------------------------------
 
     return Facility;
 

@@ -5,39 +5,37 @@
 const BadRequest = require("../errors/BadRequest");
 const NotFound = require("../errors/NotFound");
 const db = require("../models");
-const Facility = db.Facility;
 const fields = [
-    "active",
-    "address1",
-    "address2",
-    "city",
-    "email",
+    "allMats",
+    "comments",
+    "facilityId",
+    "handicapMats",
     "name",
-    "phone",
-    "state",
-    "zipCode"
-]
+    "socketMats",
+];
 const fieldsWithId = [...fields, "id"];
+const Template = db.Template;
 
 // External Modules ----------------------------------------------------------
 
 const Op = db.Sequelize.Op;
 
-// Model Specific Methods (no id) --------------------------------------------
-
 // Standard CRUD Methods -----------------------------------------------------
 
 exports.all = async () => {
     let conditions = {
-        order: [ ["name", "ASC"] ]
+        order: [
+            ["facilityId", "ASC"],
+            ["name", "ASC"]
+        ]
     }
-    return await Facility.findAll(conditions);
+    return await Template.findAll(conditions);
 }
 
 exports.find = async (id) => {
-    let result = await Facility.findByPk(id);
+    let result = await Template.findByPk(id);
     if (result === null) {
-        throw new NotFound(`id: Missing Facility ${id}`);
+        throw new NotFound(`id: Missing Template ${id}`);
     } else {
         return result;
     }
@@ -47,7 +45,7 @@ exports.insert = async (data) => {
     let transaction;
     try {
         transaction = await db.sequelize.transaction();
-        let result = await Facility.create(data, {
+        let result = await Template.create(data, {
             fields: fields,
             transaction: transaction
         });
@@ -62,29 +60,29 @@ exports.insert = async (data) => {
 }
 
 exports.remove = async (id) => {
-    let result = await Facility.findByPk(id);
+    let result = await Template.findByPk(id);
     if (result == null) {
-        throw new NotFound(`id: Missing Facility ${id}`);
+        throw new NotFound(`id: Missing Template ${id}`);
     }
-    let num = await Facility.destroy({
+    let num = await Template.destroy({
         where: { id: id }
     });
     if (num !== 1) {
-        throw new NotFound(`id: Cannot remove Facility ${id}`);
+        throw new NotFound(`id: Cannot remove Template ${id}`);
     }
     return result;
 }
 
 exports.update = async (id, data) => {
-    let original = await Facility.findByPk(id);
+    let original = await Template.findByPk(id);
     if (original === null) {
-        throw new NotFound(`id: Missing Facility ${id}`);
+        throw new NotFound(`id: Missing Template ${id}`);
     }
     let transaction;
     try {
         transaction = await db.sequelize.transaction();
         data.id = id;
-        let result = await Facility.update(data, {
+        let result = await Template.update(data, {
             fields: fieldsWithId,
             transaction: transaction,
             where: { id: id }
@@ -94,7 +92,7 @@ exports.update = async (id, data) => {
         }
         await transaction.commit();
         transaction = null;
-        return Facility.findByPk(id);
+        return Template.findByPk(id);
     } catch (err) {
         if (transaction) {
             await transaction.rollback();
@@ -110,53 +108,57 @@ exports.update = async (id, data) => {
 
 // Model Specific Methods ----------------------------------------------------
 
-exports.findByActive = async () => {
+exports.findByFacilityId = async (facilityId) => {
+
     let conditions = {
-        order: [ ["name", "ASC"] ],
-        where: { active: true  }
+        order: [
+            ["facilityId", "ASC"],
+            ["name", "ASC"]
+        ],
+        where: {
+            facilityId: facilityId,
+        }
     }
-    return await Facility.findAll(conditions);
+
+    return await Template.findAll(conditions);
+
 }
 
-exports.findByName = async (name) => {
+exports.findByFacilityIdAndName = async (facilityId, name) => {
+
     let conditions = {
-        order: [ ["name", "ASC"] ],
+        order: [
+            ["facilityId", "ASC"],
+            ["name", "ASC"]
+        ],
         where: {
+            facilityId: facilityId,
             name: { [Op.iLike]: `%${name}%` }
         }
     }
-    return await Facility.findAll(conditions);
+
+    return await Template.findAll(conditions);
+
 }
 
-exports.findByNameExact = async (name) => {
+exports.findByFacilityIdAndNameExact = async (facilityId, name) => {
+
     let conditions = {
-        order: [ ["name", "ASC"] ],
-        where: { name: name }
+        order: [
+            ["facilityId", "ASC"],
+            ["name", "ASC"]
+        ],
+        where: {
+            facilityId: facilityId,
+            name: name
+        }
     }
-    let results = await Facility.findAll(conditions);
+
+    let results = await Template.findAll(conditions);
     if (results.length > 0) {
         return results[0];
     } else {
-        throw new NotFound(`name: Missing name ${name}`)
+        throw new NotFound(`name: Missing name '${name}'`);
     }
-}
 
-exports.findGuestsByFacilityId = async (id) => {
-    // TODO - findGuestsByFacilityId(id)
-}
-
-exports.findGuestsByName = async (id, name, offset, limit) => {
-    // TODO - findGuestsByName(id, name, offset, limit)
-}
-
-exports.findGuestsByNameExact = async (id, firstName, lastName) => {
-    // TODO - findGuestsByNameExact(id, firstName, lastName)
-}
-
-exports.findRegistrationsByFacilityAndDate = async(id, registrationDate) => {
-    // TODO - findRegistrationsByFacilityAndDate(id, registrationDate)
-}
-
-exports.removeRegistrationsByFacilityAndDate = async (id, registrationDate) => {
-    // TODO - removeRegistrationsByFacilityAndDate(id, registrationDate)
 }
