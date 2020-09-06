@@ -5,6 +5,8 @@
 const db = require("../models");
 const Facility = db.Facility;
 const FacilityServices = require("./FacilityServices");
+const Guest = db.Guest;
+const GuestServices = require("./GuestServices");
 const Template = db.Template;
 const TemplateServices = require("./TemplateServices");
 
@@ -26,6 +28,12 @@ exports.reload = async () => {
 
     await loadFacilities(facilityData);
 
+    await loadGuests("Chester", guestDataChester);
+    await loadGuests("Oakland", guestDataOakland);
+    // NOTE: Portland guests will be imported
+    await loadGuests("San Francisco", guestDataSanFrancisco);
+    await loadGuests("San Jose", guestDataSanJose);
+
     await loadTemplates("Chester", templateDataChester);
     await loadTemplates("Oakland", templateDataOakland);
     await loadTemplates("Portland", templateDataPortland);
@@ -37,6 +45,7 @@ exports.reload = async () => {
     // Return counts of created models
     let results = { };
     results["facilities"] = await Facility.count({});
+    results["guests"] = await Guest.count({});
     results["templates"] = await Template.count({});
     return results;
 
@@ -99,6 +108,78 @@ const facilityData = [
         state: "CA",
         zipCode: "95131"
     },
+]
+
+const guestDataChester = [
+    {
+        comments: "Chester Fred Comment",
+        firstName: "Fred",
+        lastName: "Flintstone"
+    },
+    {
+        comments: "Chester Barney Comment",
+        firstName: "Barney",
+        lastName: "Rubble"
+    },
+    {
+        comments: "Chester Bam Bam Comment",
+        firstName: "Bam Bam",
+        lastName: "Rubble"
+    }
+]
+
+const guestDataOakland = [
+    {
+        comments: "Oakland Fred Comment",
+        firstName: "Fred",
+        lastName: "Flintstone"
+    },
+    {
+        comments: "Oakland Barney Comment",
+        firstName: "Barney",
+        lastName: "Rubble"
+    },
+    {
+        comments: "Oakland Bam Bam Comment",
+        firstName: "Bam Bam",
+        lastName: "Rubble"
+    }
+]
+
+const guestDataSanFrancisco = [
+    {
+        comments: "San Francisco Fred Comment",
+        firstName: "Fred",
+        lastName: "Flintstone"
+    },
+    {
+        comments: "San Francisco Barney Comment",
+        firstName: "Barney",
+        lastName: "Rubble"
+    },
+    {
+        comments: "San Francisco Bam Bam Comment",
+        firstName: "Bam Bam",
+        lastName: "Rubble"
+    }
+]
+
+const guestDataSanJose = [
+    {
+        comments: "San Jose Fred Comment",
+        firstName: "Fred",
+        lastName: "Flintstone"
+    },
+    {
+        comments: "San Jose Barney Comment",
+        firstName: "Barney",
+        lastName: "Rubble"
+    },
+    {
+        comments: "San Jose Bam Bam Comment",
+        firstName: "Bam Bam",
+        lastName: "Rubble"
+    }
 ]
 
 const templateDataChester = [
@@ -187,6 +268,14 @@ const templateDataSanJose = [
 let loadFacilities = async (facilityData) => {
     for (const facility of facilityData) {
         await FacilityServices.insert(facility);
+    }
+}
+
+let loadGuests = async (facilityName, guestData) => {
+    let facility = await FacilityServices.findByNameExact(facilityName);
+    for (const guest of guestData) {
+        guest.facilityId = facility.id;
+        await GuestServices.insert(guest);
     }
 }
 

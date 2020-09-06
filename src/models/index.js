@@ -48,12 +48,14 @@ db.sequelize.sync({
 
 // TODO - Configure Models
 db.Facility = require("./Facility")(sequelize);
+db.Guest = require("./Guest")(sequelize);
 db.Template = require("./Template")(sequelize);
 
 // Configure Associations ----------------------------------------------------
 
 // TODO - Configure Associations
 db.Facility.associate(db);
+db.Guest.associate(db);
 db.Template.associate(db);
 
 // Export Database Interface -------------------------------------------------

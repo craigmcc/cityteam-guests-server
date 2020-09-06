@@ -4,8 +4,8 @@
 
 const db = require ("../../src/models");
 const Facility = db.Facility;
-const Template = db.Template;
-const TemplateServices = require("../../src/services/TemplateServices");
+const Guest = db.Guest;
+const GuestServices = require("../../src/services/GuestServices");
 
 // External Modules ----------------------------------------------------------
 
@@ -39,37 +39,28 @@ const dataset = {
         zipCode: '88888'
     },
 
-    // Template Data ---------------------------------------------------------
+    // Guest Data ---------------------------------------------------------
 
-    template1Full: {
-        allMats: "1-24",
-        comments: null,
-        handicapMats: "2,4,6",
-        name: "Emergency Fewer Mats",
-        socketMats: "6-10,12",
+    guest1Full: {
+        firstName: "Fred",
+        lastName: "Flintstone"
     },
-
-    template2Full: {
-        allMats: "1-58",
-        comments: null,
-        handicapMats: "2,4,6",
-        name: "Standard Mats",
-        socketMats: "6-10,12",
+    
+    guest2Full: {
+        firstName: "Barney",
+        lastName: "Rubble"
     },
-
-    template3Full: {
-        allMats: "1-12",
-        comments: null,
-        handicapMats: "2,4,6",
-        name: "Extremely Fewer Mats",
-        socketMats: "6-10,12",
+    
+    guest3Full: {
+        firstName: "Bam Bam",
+        lastName: "Rubble"
     },
 
 };
 
-// TemplateServices Tests ----------------------------------------------------
+// GuestServices Tests -------------------------------------------------------
 
-describe("TemplateServices Tests", () => {
+describe("GuestServices Tests", () => {
 
     // Testing Hooks ---------------------------------------------------------
 
@@ -77,13 +68,13 @@ describe("TemplateServices Tests", () => {
         await Facility.sync({
             force: true
         });
-        await Template.sync({
+        await Guest.sync({
             force: true
         });
     });
 
     beforeEach("#erase", async () => {
-        await Template.destroy({
+        await Guest.destroy({
             cascade: true,
             truncate: true
         });
@@ -103,30 +94,30 @@ describe("TemplateServices Tests", () => {
 
                 let facility1 = await Facility.create(dataset.facility1full);
                 let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data1.forEach(datum => {
                     datum.facilityId = facility1.id;
                 })
-                await Template.bulkCreate(data1, {
+                await Guest.bulkCreate(data1, {
                     validate: true
                 });
 
                 let facility2 = await Facility.create(dataset.facility2full);
                 let data2 = [
-                    dataset.template1Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest3Full
                 ];
                 data2.forEach(datum => {
                     datum.facilityId = facility2.id;
                 })
-                await Template.bulkCreate(data2, {
+                await Guest.bulkCreate(data2, {
                     validate: true
                 });
 
-                let results = await TemplateServices.all();
+                let results = await GuestServices.all();
                 expect(results.length).to.equal(5);
 
             });
@@ -137,7 +128,7 @@ describe("TemplateServices Tests", () => {
 
             it("should find no objects", async () => {
 
-                let results = await TemplateServices.all();
+                let results = await GuestServices.all();
                 expect(results.length).to.equal(0);
 
             });
@@ -154,10 +145,10 @@ describe("TemplateServices Tests", () => {
 
                 let id = 9999;
                 try {
-                    await TemplateServices.find(id);
+                    await GuestServices.find(id);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    let expected = `id: Missing Template ${id}`;
+                    let expected = `id: Missing Guest ${id}`;
                     expect(err.message).includes(expected);
                 }
 
@@ -166,11 +157,12 @@ describe("TemplateServices Tests", () => {
             it("should succeed on matched id", async () => {
 
                 let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = { ...dataset.template1Full, facilityId: facility1.id };
-                let template1 = await Template.create(data1);
+                let data1 = { ...dataset.guest1Full, facilityId: facility1.id };
+                let guest1 = await Guest.create(data1);
 
-                let result = await TemplateServices.find(template1.id);
-                expect(result.name).to.equal(data1.name);
+                let result = await GuestServices.find(guest1.id);
+                expect(result.firstName).to.equal(data1.firstName);
+                expect(result.lastName).to.equal(data1.lastName);
 
             });
 
@@ -180,39 +172,39 @@ describe("TemplateServices Tests", () => {
 
     describe("#findByFacilityId()", () => {
 
-        context("with two facilities and associated templates", () => {
+        context("with two facilities and associated guests", () => {
 
-            it("should find only templates for specified facility", async () => {
+            it("should find only guests for specified facility", async () => {
 
                 let facility1 = await Facility.create(dataset.facility1full);
                 let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data1.forEach(datum => {
                     datum.facilityId = facility1.id;
                 })
-                await Template.bulkCreate(data1, {
+                await Guest.bulkCreate(data1, {
                     validate: true
                 });
 
                 let facility2 = await Facility.create(dataset.facility2full);
                 let data2 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data2.forEach(datum => {
                     datum.facilityId = facility2.id;
                 })
-                await Template.bulkCreate(data2, {
+                await Guest.bulkCreate(data2, {
                     validate: true
                 });
 
-                let count = await Template.count({});
+                let count = await Guest.count({});
                 expect(count).to.equal(6);
-                let results = await TemplateServices.findByFacilityId
+                let results = await GuestServices.findByFacilityId
                     (facility1.id);
                 expect(results.length).to.equal(3);
 
@@ -224,41 +216,41 @@ describe("TemplateServices Tests", () => {
 
     describe("#findByFacilityIdAndName()", () => {
 
-        context("with two facilities and associated templates", () => {
+        context("with two facilities and associated guests", () => {
 
             // SQLITE3 does not support iLike match condition
-            it.skip("should find only matching templates", async () => {
+            it.skip("should find only matching guests", async () => {
 
                 let facility1 = await Facility.create(dataset.facility1full);
                 let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data1.forEach(datum => {
                     datum.facilityId = facility1.id;
                 })
-                await Template.bulkCreate(data1, {
+                await Guest.bulkCreate(data1, {
                     validate: true
                 });
 
                 let facility2 = await Facility.create(dataset.facility2full);
                 let data2 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data2.forEach(datum => {
                     datum.facilityId = facility2.id;
                 })
-                await Template.bulkCreate(data2, {
+                await Guest.bulkCreate(data2, {
                     validate: true
                 });
 
-                let count = await Template.count({});
+                let count = await Guest.count({});
                 expect(count).to.equal(6);
-                let results = await TemplateServices.findByFacilityIdAndName
-                    (facility1.id, "fewer");
+                let results = await GuestServices.findByFacilityIdAndName
+                    (facility1.id, "rub");
                 expect(results.length).to.equal(2);
 
             });
@@ -269,33 +261,34 @@ describe("TemplateServices Tests", () => {
 
     describe("#findByFacilityIdAndNameExact()", () => {
 
-        context("with two facilities and associated templates", () => {
+        context("with two facilities and associated guests", () => {
 
             it("should fail with incorrect name", async () => {
 
                 let facility1 = await Facility.create(dataset.facility1full);
                 let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data1.forEach(datum => {
                     datum.facilityId = facility1.id;
                 })
-                await Template.bulkCreate(data1, {
+                await Guest.bulkCreate(data1, {
                     validate: true
                 });
 
-                let count = await Template.count({});
+                let count = await Guest.count({});
                 expect(count).to.equal(3);
-                let incorrectName = "Incorrect Name";
+                let incorrectFirstName = "Incorrect First Name";
+                let incorrectLastName = "Incorrect Last Name";
                 try {
-                    await TemplateServices.findByFacilityIdAndNameExact
-                        (facility1.id, incorrectName);
+                    await GuestServices.findByFacilityIdAndNameExact
+                        (facility1.id, incorrectFirstName, incorrectLastName);
                     expect.fail("Should have thrown not found error");
                 } catch (err) {
                     expect(err.message).includes
-                        (`name: Missing name '${incorrectName}'`);
+                    (`name: Missing name '${incorrectFirstName} ${incorrectLastName}'`);
                 }
 
             });
@@ -304,37 +297,39 @@ describe("TemplateServices Tests", () => {
 
                 let facility1 = await Facility.create(dataset.facility1full);
                 let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data1.forEach(datum => {
                     datum.facilityId = facility1.id;
                 })
-                await Template.bulkCreate(data1, {
+                await Guest.bulkCreate(data1, {
                     validate: true
                 });
 
                 let facility2 = await Facility.create(dataset.facility2full);
                 let data2 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data2.forEach(datum => {
                     datum.facilityId = facility2.id;
                 })
-                await Template.bulkCreate(data2, {
+                await Guest.bulkCreate(data2, {
                     validate: true
                 });
 
-                let count = await Template.count({});
+                let count = await Guest.count({});
                 expect(count).to.equal(6);
                 try {
-                    let result = await TemplateServices.findByFacilityIdAndNameExact
-                    (facility1.id, dataset.template2Full.name);
+                    let result = await GuestServices.findByFacilityIdAndNameExact
+                        (facility1.id, dataset.guest2Full.firstName,
+                            dataset.guest2Full.lastName);
                     expect(result.facilityId).to.equal(facility1.id);
-                    expect(result.name).to.equal(dataset.template2Full.name);
+                    expect(result.firstName).to.equal(dataset.guest2Full.firstName);
+                    expect(result.lastName).to.equal(dataset.guest2Full.lastName);
                 } catch (err) {
                     expect.fail(`Should not have thrown ${err.message}'`);
                 }
@@ -353,26 +348,26 @@ describe("TemplateServices Tests", () => {
 
                 let facility1 = await Facility.create(dataset.facility1full);
                 let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data1.forEach(datum => {
                     datum.facilityId = facility1.id;
                 })
-                await Template.bulkCreate(data1, {
+                await Guest.bulkCreate(data1, {
                     validate: true
                 });
 
-                let templateNew = {
-                    ...dataset.template2Full,
+                let guestNew = {
+                    ...dataset.guest2Full,
                     facilityId: facility1.id
                 };
                 try {
-                    await TemplateServices.insert(templateNew);
+                    await GuestServices.insert(guestNew);
                     expect.fail("Should have thrown validation error");
                 } catch (err) {
-                    expect(err.message).includes(`name: Name '${templateNew.name}' ` +
+                    expect(err.message).includes(`name: Name '${guestNew.firstName} ${guestNew.lastName}' ` +
                         "is already in use within this facility")
                 }
 
@@ -382,26 +377,27 @@ describe("TemplateServices Tests", () => {
 
                 let facility1 = await Facility.create(dataset.facility1full);
                 let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
+                    dataset.guest1Full,
+                    dataset.guest2Full,
+                    dataset.guest3Full
                 ];
                 data1.forEach(datum => {
                     datum.facilityId = facility1.id;
                 })
-                await Template.bulkCreate(data1, {
+                await Guest.bulkCreate(data1, {
                     validate: true
                 });
 
                 let facility2 = await Facility.create(dataset.facility2full);
 
-                let templateNew = {
-                    ...dataset.template2Full,
+                let guestNew = {
+                    ...dataset.guest2Full,
                     facilityId: facility2.id
                 };
                 try {
-                    let result = await TemplateServices.insert(templateNew);
-                    expect(result.name).to.equal(templateNew.name);
+                    let result = await GuestServices.insert(guestNew);
+                    expect(result.firstName).to.equal(guestNew.firstName);
+                    expect(result.lastName).to.equal(guestNew.lastName);
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);
                 }
@@ -412,158 +408,68 @@ describe("TemplateServices Tests", () => {
 
         context("with invalid arguments", () => {
 
-            it("should fail with empty name", async () => {
+            it("should fail with empty firstName", async () => {
 
                 let facility2 = await Facility.create(dataset.facility2full);
 
-                let templateNew = {
-                    ...dataset.template2Full,
+                let guestNew = {
+                    ...dataset.guest2Full,
                     facilityId: facility2.id,
-                    name: null
+                    firstName: null
                 };
                 try {
-                    await TemplateServices.insert(templateNew);
+                    await GuestServices.insert(guestNew);
                     expect.fail("Should have thrown validation error");
                 } catch (err) {
-                    expect(err.message).includes("template.name cannot be null");
+                    expect(err.message).includes("guest.firstName cannot be null");
                 }
 
             });
 
-            it("should fail with empty allMats", async () => {
+            it("should fail with empty lastName", async () => {
 
                 let facility2 = await Facility.create(dataset.facility2full);
 
-                let templateNew = {
-                    ...dataset.template2Full,
-                    allMats: null,
+                let guestNew = {
+                    ...dataset.guest2Full,
                     facilityId: facility2.id,
+                    lastName: null
                 };
                 try {
-                    await TemplateServices.insert(templateNew);
+                    await GuestServices.insert(guestNew);
                     expect.fail("Should have thrown validation error");
                 } catch (err) {
-                    expect(err.message).includes("template.allMats cannot be null");
+                    expect(err.message).includes("guest.lastName cannot be null");
                 }
 
             });
 
             it("should fail with empty facilityId", async () => {
 
-                let templateNew = {
-                    ...dataset.template2Full,
+                let guestNew = {
+                    ...dataset.guest2Full,
                     facilityId: null,
                 };
                 try {
-                    await TemplateServices.insert(templateNew);
+                    await GuestServices.insert(guestNew);
                     expect.fail("Should have thrown validation error");
                 } catch (err) {
-                    expect(err.message).includes("template.facilityId cannot be null");
-                }
-
-            });
-
-            it("should fail with invalid allMats", async () => {
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    allMats: "3,2",
-                    facilityId: facility2.id,
-                };
-                try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("is out of ascending order");
+                    expect(err.message).includes("guest.facilityId cannot be null");
                 }
 
             });
 
             it("should fail with invalid facilityId", async () => {
 
-                let templateNew = {
-                    ...dataset.template2Full,
+                let guestNew = {
+                    ...dataset.guest2Full,
                     facilityId: 9999,
                 };
                 try {
-                    await TemplateServices.insert(templateNew);
+                    await GuestServices.insert(guestNew);
                     expect.fail("Should have thrown validation error");
                 } catch (err) {
-                    expect(err.message).includes(`facilityId: Missing Facility ${templateNew.facilityId}`);
-                }
-
-            });
-
-            it("should fail with invalid handicapMats subset", async () => {
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    handicapMats: "99,101",
-                };
-                try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("is not a subset");
-                }
-
-            });
-
-            it("should fail with invalid handicapMats syntax", async () => {
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    handicapMats: "3,2",
-                };
-                try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("is out of ascending order");
-                }
-
-            });
-
-            it("should fail with invalid socketMats subset", async () => {
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    socketMats: "99,101",
-                };
-                try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("is not a subset");
-                }
-
-            });
-
-            it("should fail with invalid socketMats syntax", async () => {
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    socketMats: "3,2",
-                };
-                try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("is out of ascending order");
+                    expect(err.message).includes(`facilityId: Missing Facility ${guestNew.facilityId}`);
                 }
 
             });
@@ -575,13 +481,14 @@ describe("TemplateServices Tests", () => {
             it("should succeed", async () => {
 
                 let facility2 = await Facility.create(dataset.facility2full);
-                let templateNew = {
-                    ...dataset.template2Full,
+                let guestNew = {
+                    ...dataset.guest2Full,
                     facilityId: facility2.id
                 };
                 try {
-                    let result = await TemplateServices.insert(templateNew);
-                    expect(result.name).to.equal(templateNew.name);
+                    let result = await GuestServices.insert(guestNew);
+                    expect(result.firstName).to.equal(guestNew.firstName);
+                    expect(result.lastName).to.equal(guestNew.lastName);
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);
                 }
@@ -600,10 +507,10 @@ describe("TemplateServices Tests", () => {
 
                 let id = 9999;
                 try {
-                    await TemplateServices.remove(id);
+                    await GuestServices.remove(id);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    expect(err.message).includes(`id: Missing Template ${id}`);
+                    expect(err.message).includes(`id: Missing Guest ${id}`);
                 }
 
             });
@@ -611,17 +518,18 @@ describe("TemplateServices Tests", () => {
             it("should succeed on matched id", async () => {
 
                 let facility2 = await Facility.create(dataset.facility2full);
-                let templateNew = {
-                    ...dataset.template2Full,
+                let guestNew = {
+                    ...dataset.guest2Full,
                     facilityId: facility2.id
                 };
-                let template2 = await Template.create(templateNew);
-                let count = await Template.count({});
+                let guest2 = await Guest.create(guestNew);
+                let count = await Guest.count({});
                 expect(count).to.equal(1);
 
-                let result = await TemplateServices.remove(template2.id);
-                expect(result.name).to.equal(templateNew.name);
-                count = await Template.count({});
+                let result = await GuestServices.remove(guest2.id);
+                expect(result.firstName).to.equal(guestNew.firstName);
+                expect(result.lastName).to.equal(guestNew.lastName);
+                count = await Guest.count({});
                 expect(count).to.equal(0);
 
             });
@@ -640,28 +548,29 @@ describe("TemplateServices Tests", () => {
 
                 let facility = await Facility.create(dataset.facility1full);
                 let data1 = {
-                    ...dataset.template1Full,
+                    ...dataset.guest1Full,
                     facilityId: facility.id
                 }
-                let template1 = await Template.create(data1);
+                let guest1 = await Guest.create(data1);
                 let data2 = {
-                    ...dataset.template2Full,
+                    ...dataset.guest2Full,
                     facilityId: facility.id
                 }
-                await Template.create(data2);
+                await Guest.create(data2);
 
                 let data3 = {
-                    ...dataset.template1Full,
+                    ...dataset.guest1Full,
                     facilityId: facility.id,
-                    name: data2.name
+                    firstName: data2.firstName,
+                    lastName: data2.lastName
                 }
                 try {
-                    await TemplateServices.update(template1.id, data3);
+                    await GuestServices.update(guest1.id, data3);
                     expect.fail("Should have thrown validation error");
                 } catch (err) {
                     expect(err.message)
-                        .includes(`name: Name '${data2.name}' ` +
-                                  "is already in use within this facility");
+                        .includes(`name: Name '${data2.firstName} ${data2.lastName}' ` +
+                            "is already in use within this facility");
                 }
 
             });
@@ -670,22 +579,22 @@ describe("TemplateServices Tests", () => {
 
                 let facility = await Facility.create(dataset.facility1full);
                 let data = {
-                    ...dataset.template1Full,
+                    ...dataset.guest1Full,
                     facilityId: facility.id
                 }
-                await Template.create(data);
+                await Guest.create(data);
 
                 data = {
-                    ...dataset.template1Full,
+                    ...dataset.guest1Full,
                     facilityId: facility.id
                 }
                 let invalidId = 9999;
                 try {
-                    await TemplateServices.update(invalidId, data);
+                    await GuestServices.update(invalidId, data);
                     expect.fail("Should have thrown not found error");
                 } catch (err) {
                     expect(err.message)
-                        .includes(`id: Missing Template ${invalidId}`);
+                        .includes(`id: Missing Guest ${invalidId}`);
                 }
 
             });
@@ -698,18 +607,18 @@ describe("TemplateServices Tests", () => {
 
                 let facility = await Facility.create(dataset.facility1full);
                 let data = {
-                    ...dataset.template1Full,
+                    ...dataset.guest1Full,
                     facilityId: facility.id
                 }
-                let template = await Template.create(data);
+                let guest = await Guest.create(data);
 
                 data = {
-                    ...dataset.template1Full,
+                    ...dataset.guest1Full,
                     facilityId: facility.id
                 }
                 try {
-                    let result = await TemplateServices.update
-                    (template.id, data);
+                    let result = await GuestServices.update
+                    (guest.id, data);
                     expect(result.name).to.equal(data.name);
                 } catch (err) {
                     expect.fail(`Should not have thrown ${err.message}`);
@@ -721,19 +630,19 @@ describe("TemplateServices Tests", () => {
 
                 let facility = await Facility.create(dataset.facility1full);
                 let data = {
-                    ...dataset.template1Full,
+                    ...dataset.guest1Full,
                     facilityId: facility.id
                 }
-                let template = await Template.create(data);
+                let guest = await Guest.create(data);
 
                 data = {
-                    ...dataset.template1Full,
+                    ...dataset.guest1Full,
                     facilityId: facility.id,
-                    name: dataset.template1Full.name + " Updated"
+                    firstName: dataset.guest1Full.firstName + " Updated"
                 }
                 try {
-                    let result = await TemplateServices.update
-                    (template.id, data);
+                    let result = await GuestServices.update
+                       (guest.id, data);
                     expect(result.name).to.equal(data.name);
                 } catch (err) {
                     expect.fail(`Should not have thrown ${err.message}`);

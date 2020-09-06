@@ -6,6 +6,7 @@ const BadRequest = require("../errors/BadRequest");
 const NotFound = require("../errors/NotFound");
 const db = require("../models");
 const FacilityServices = require("../services/FacilityServices");
+const GuestServices = require("../services/GuestServices");
 const TemplateServices = require("../services/TemplateServices");
 
 // External Modules ----------------------------------------------------------
@@ -132,6 +133,41 @@ module.exports = (app) => {
 
     // Model Specific Endpoints ----------------------------------------------
 
+    // GET /:id/guests - Find guests by id
+    router.get("/:id/guests", async (req, res) => {
+        try {
+            res.send(await GuestServices.findByFacilityId(req.params.id));
+        } catch (err) {
+            console.error("FacilityEndpoints.findGuestsByFacilityId error: " +
+                JSON.stringify(err, null, 2));
+            res.status(500).send(err.message);
+        }
+    });
+
+    // GET /:id/guests/name/:name - Find guests by id and name segment match
+    router.get("/:id/guests/name/:name", async (req, res) => {
+        try {
+            res.send(await GuestServices.findByFacilityIdAndName
+                (req.params.id, req.params.name));
+        } catch (err) {
+            console.error("FacilityEndpoints.findGuestsByFacilityIdAndName error: " +
+                JSON.stringify(err, null, 2));
+            res.status(500).send(err.message);
+        }
+    });
+
+    // GET /:id/guests/nameExact/:firstName/:lastName - Find guests by id and name
+    router.get("/:id/guests/nameExact/:firstName/:lastName", async (req, res) => {
+        try {
+            res.send(await GuestServices.findByFacilityIdAndNameExact
+                (req.params.id, req.params.firstName, req.params.lastName));
+        } catch (err) {
+            console.error("FacilityEndpoints.findGuestsByFacilityIdAndNameExact error: " +
+                JSON.stringify(err, null, 2));
+            res.status(500).send(err.message);
+        }
+    });
+
     // GET /:id/templates - Find templates by id
     router.get("/:id/templates", async (req, res) => {
         try {
@@ -147,7 +183,7 @@ module.exports = (app) => {
     router.get("/:id/templates/name/:name", async (req, res) => {
         try {
             res.send(await TemplateServices.findByFacilityIdAndName
-                (req.params.id, req.params.name));
+            (req.params.id, req.params.name));
         } catch (err) {
             console.error("FacilityEndpoints.findTemplatesByFacilityIdAndName error: " +
                 JSON.stringify(err, null, 2));
@@ -159,7 +195,7 @@ module.exports = (app) => {
     router.get("/:id/templates/nameExact/:name", async (req, res) => {
         try {
             res.send(await TemplateServices.findByFacilityIdAndNameExact
-                (req.params.id, req.params.name));
+            (req.params.id, req.params.name));
         } catch (err) {
             console.error("FacilityEndpoints.findTemplatesByFacilityIdAndNameExact error: " +
                 JSON.stringify(err, null, 2));
