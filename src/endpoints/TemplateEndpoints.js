@@ -11,6 +11,8 @@ const TemplateServices = require("../services/TemplateServices");
 
 const router = require("express").Router();
 
+// Template Endpoints --------------------------------------------------------
+
 module.exports = (app) => {
 
     // Standard CRUD Endpoints -----------------------------------------------

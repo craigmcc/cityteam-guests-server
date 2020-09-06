@@ -12,6 +12,8 @@ const TemplateServices = require("../services/TemplateServices");
 
 const router = require("express").Router();
 
+// Facility Endpoints --------------------------------------------------------
+
 module.exports = (app) => {
 
     // Model Specific Endpoints (no id) --------------------------------------

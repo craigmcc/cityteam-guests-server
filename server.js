@@ -33,6 +33,7 @@ app.get("/", (req, res) => {
     });
 
 // TODO - Configure Routes
+require("./src/endpoints/DevModeEndpoints")(app);
 require("./src/endpoints/FacilityEndpoints")(app);
 require("./src/endpoints/TemplateEndpoints")(app);
 
