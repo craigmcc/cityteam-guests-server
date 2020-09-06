@@ -3,6 +3,8 @@
 // Internal Modules ----------------------------------------------------------
 
 const db = require("../models");
+const Ban = db.Ban;
+const BanServices = require("./BanServices");
 const Facility = db.Facility;
 const FacilityServices = require("./FacilityServices");
 const Guest = db.Guest;
@@ -40,10 +42,14 @@ exports.reload = async () => {
     await loadTemplates("San Francisco", templateDataSanFrancisco);
     await loadTemplates("San Jose", templateDataSanJose);
 
+    await loadBans("San Francisco", "Fred", "Flintstone", banDataSanFranciscoFred);
+    await loadBans("San Francisco", "Barney", "Rubble", banDataSanFranciscoBarney);
+
     console.log("***** Reloading Seed Data End *****")
 
     // Return counts of created models
     let results = { };
+    results["bans"] = await Ban.count({});
     results["facilities"] = await Facility.count({});
     results["guests"] = await Guest.count({});
     results["templates"] = await Template.count({});
@@ -52,6 +58,36 @@ exports.reload = async () => {
 }
 
 // Seed Data -----------------------------------------------------------------
+
+const banDataSanFranciscoBarney = [
+    {
+        active: true,
+        banFrom: "2020-09-01",
+        banTo: "2020-09-30",
+        comments: "San Francisco Barney September Ban"
+    },
+    {
+        active: true,
+        banFrom: "2020-11-01",
+        banTo: "2020-11-30",
+        comments: "San Francisco Barney November Ban"
+    }
+]
+
+const banDataSanFranciscoFred = [
+    {
+        active: true,
+        banFrom: "2020-08-01",
+        banTo: "2020-08-31",
+        comments: "San Francisco Fred August Ban"
+    },
+    {
+        active: true,
+        banFrom: "2020-10-01",
+        banTo: "2020-10-31",
+        comments: "San Francisco Fred October Ban"
+    }
+]
 
 const facilityData = [
     {
@@ -264,6 +300,16 @@ const templateDataSanJose = [
 ]
 
 // Private Methods -----------------------------------------------------------
+
+let loadBans = async (facilityName, firstName, lastName, banData) => {
+    let facility = await FacilityServices.findByNameExact(facilityName);
+    let guest = await GuestServices.findByFacilityIdAndNameExact
+        (facility.id, firstName, lastName);
+    for (const ban of banData) {
+        ban.guestId = guest.id;
+        await BanServices.insert(ban);
+    }
+}
 
 let loadFacilities = async (facilityData) => {
     for (const facility of facilityData) {

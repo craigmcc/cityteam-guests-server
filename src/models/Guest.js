@@ -95,7 +95,7 @@ module.exports = (sequelize) => {
 
     Guest.associate = function(models) {
 
-        // TODO - association with Ban
+        models.Guest.hasMany(models.Ban);
 
         Facility = models.Facility;
         models.Guest.belongsTo(models.Facility, {

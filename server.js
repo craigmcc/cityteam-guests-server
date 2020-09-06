@@ -21,6 +21,7 @@ let PORT = process.env.PORT || 8082;
 // Configure Application -----------------------------------------------------
 
 const app = express();
+// app.set("json spaces", 2); // Generate pretty JSON in responses
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
@@ -33,8 +34,10 @@ app.get("/", (req, res) => {
     });
 
 // TODO - Configure Routes
+require("./src/endpoints/BanEndpoints")(app);
 require("./src/endpoints/DevModeEndpoints")(app);
 require("./src/endpoints/FacilityEndpoints")(app);
+require("./src/endpoints/GuestEndpoints")(app);
 require("./src/endpoints/TemplateEndpoints")(app);
 
 // Start Server --------------------------------------------------------------
