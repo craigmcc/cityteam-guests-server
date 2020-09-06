@@ -24,11 +24,13 @@ module.exports = (sequelize) => {
 
         banFrom: {
             allowNull: false,
+            field: "banfrom",
             type: DataTypes.DATEONLY
         },
 
         banTo: {
             allowNull: false,
+            field: "banto",
             type: DataTypes.DATEONLY
         },
 
@@ -39,6 +41,7 @@ module.exports = (sequelize) => {
 
         guestId: {
             allowNull: false,
+            field: "guestid",
             type: DataTypes.INTEGER,
             validate: {
                 isValidGuestId: function(value, next) {
