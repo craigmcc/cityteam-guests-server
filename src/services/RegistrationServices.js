@@ -18,6 +18,7 @@ const fields = [
     "wakeupTime"
 ];
 const fieldsWithId = [...fields, "id"];
+const Guest = db.Guest;
 const Registration = db.Registration;
 
 // External Modules ----------------------------------------------------------
@@ -115,10 +116,12 @@ exports.update = async (id, data) => {
 
 // TODO - deassign(registrationId) goes somewhere
 
-// TODO - findByFacilityIdAndRegistrationDate loops forever?
 exports.findByFacilityIdAndRegistrationDate = async (facilityId, registrationDate) => {
 
     let conditions = {
+        include: {
+            model: Guest
+        },
         order: [
             ["facilityId", "ASC"],
             ["registrationDate", "ASC"],

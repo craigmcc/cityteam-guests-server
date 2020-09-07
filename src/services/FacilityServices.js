@@ -140,23 +140,3 @@ exports.findByNameExact = async (name) => {
         throw new NotFound(`name: Missing name ${name}`)
     }
 }
-
-exports.findGuestsByFacilityId = async (id) => {
-    // TODO - findGuestsByFacilityId(id)
-}
-
-exports.findGuestsByName = async (id, name, offset, limit) => {
-    // TODO - findGuestsByName(id, name, offset, limit)
-}
-
-exports.findGuestsByNameExact = async (id, firstName, lastName) => {
-    // TODO - findGuestsByNameExact(id, firstName, lastName)
-}
-
-exports.findRegistrationsByFacilityAndDate = async(id, registrationDate) => {
-    // TODO - findRegistrationsByFacilityAndDate(id, registrationDate)
-}
-
-exports.removeRegistrationsByFacilityAndDate = async (id, registrationDate) => {
-    // TODO - removeRegistrationsByFacilityAndDate(id, registrationDate)
-}

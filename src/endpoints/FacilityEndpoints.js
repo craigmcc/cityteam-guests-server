@@ -173,10 +173,11 @@ module.exports = (app) => {
     router.get("/:id/registrations/:registrationDate", async (req, res) => {
         try {
             res.send(await RegistrationServices.findByFacilityIdAndRegistrationDate
-                (req.params.id, reg.params.registrationDate));
+                (req.params.id, req.params.registrationDate));
         } catch (err) {
             console.error("FacilityEndpoints.findRegistrationsByFacilityIdAndRegistrationDate error: " +
                 JSON.stringify(err, null, 2));
+            req.status(500).send(err.message);
         }
     });
 
