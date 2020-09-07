@@ -7,6 +7,7 @@ const NotFound = require("../errors/NotFound");
 const db = require("../models");
 const FacilityServices = require("../services/FacilityServices");
 const GuestServices = require("../services/GuestServices");
+const RegistrationServices = require("../services/RegistrationServices");
 const TemplateServices = require("../services/TemplateServices");
 
 // External Modules ----------------------------------------------------------
@@ -167,6 +168,19 @@ module.exports = (app) => {
             res.status(500).send(err.message);
         }
     });
+
+    // GET /:id/registrations/:registrationDate - Find registrations by id and date
+    router.get("/:id/registrations/:registrationDate", async (req, res) => {
+        try {
+            res.send(await RegistrationServices.findByFacilityIdAndRegistrationDate
+                (req.params.id, reg.params.registrationDate));
+        } catch (err) {
+            console.error("FacilityEndpoints.findRegistrationsByFacilityIdAndRegistrationDate error: " +
+                JSON.stringify(err, null, 2));
+        }
+    });
+
+    // TODO - generate and remove registrations for a facility+date
 
     // GET /:id/templates - Find templates by id
     router.get("/:id/templates", async (req, res) => {

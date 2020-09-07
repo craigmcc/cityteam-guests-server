@@ -9,6 +9,8 @@ const Facility = db.Facility;
 const FacilityServices = require("./FacilityServices");
 const Guest = db.Guest;
 const GuestServices = require("./GuestServices");
+const Registration = db.Registration;
+const RegistrationServices = require("./RegistrationServices");
 const Template = db.Template;
 const TemplateServices = require("./TemplateServices");
 
@@ -36,6 +38,28 @@ exports.reload = async () => {
     await loadGuests("San Francisco", guestDataSanFrancisco);
     await loadGuests("San Jose", guestDataSanJose);
 
+    await loadRegistrationsAssigned("Chester", "Fred", "Flintstone", 5, registrationDataAssigned);
+    await loadRegistrationsAssigned("Chester", "Barney", "Rubble", 6, registrationDataAssigned);
+    await loadRegistrationsAssigned("Chester", "Bam Bam", "Rubble", 7, registrationDataAssigned);
+
+    await loadRegistrationsAssigned("Oakland", "Fred", "Flintstone", 5, registrationDataAssigned);
+    await loadRegistrationsAssigned("Oakland", "Barney", "Rubble", 6, registrationDataAssigned);
+    await loadRegistrationsAssigned("Oakland", "Bam Bam", "Rubble", 7, registrationDataAssigned);
+
+    await loadRegistrationsAssigned("San Francisco", "Fred", "Flintstone", 5, registrationDataAssigned);
+    await loadRegistrationsAssigned("San Francisco", "Barney", "Rubble", 6, registrationDataAssigned);
+    await loadRegistrationsAssigned("San Francisco", "Bam Bam", "Rubble", 7, registrationDataAssigned);
+
+    await loadRegistrationsAssigned("San Jose", "Fred", "Flintstone", 5, registrationDataAssigned);
+    await loadRegistrationsAssigned("San Jose", "Barney", "Rubble", 6, registrationDataAssigned);
+    await loadRegistrationsAssigned("San Jose", "Bam Bam", "Rubble", 7, registrationDataAssigned);
+
+    await loadRegistrationsUnassigned("Chester", registrationDataUnassigned);
+    await loadRegistrationsUnassigned("Oakland", registrationDataUnassigned);
+    // NOTE: Portland registrations will be imported
+    await loadRegistrationsUnassigned("San Francisco", registrationDataUnassigned);
+    await loadRegistrationsUnassigned("San Jose", registrationDataUnassigned);
+
     await loadTemplates("Chester", templateDataChester);
     await loadTemplates("Oakland", templateDataOakland);
     await loadTemplates("Portland", templateDataPortland);
@@ -52,6 +76,7 @@ exports.reload = async () => {
     results["bans"] = await Ban.count({});
     results["facilities"] = await Facility.count({});
     results["guests"] = await Guest.count({});
+    results["registrations"] = await Registration.count({});
     results["templates"] = await Template.count({});
     return results;
 
@@ -218,6 +243,41 @@ const guestDataSanJose = [
     }
 ]
 
+// Reused for each facility
+const registrationDataAssigned = [
+    {
+        features: "SH",
+        paymentAmount: 5.00,
+        paymentType: "$$",
+        registrationDate: "2020-07-04",
+        showerTime: "04:30",
+        wakeupTime: "04:00"
+    }
+]
+
+// Reused for each facility
+const registrationDataUnassigned = [
+    {
+        features: "H",
+        matNumber: 1,
+        registrationDate: "2020-07-04"
+    },
+    {
+        features: "S",
+        matNumber: 2,
+        registrationDate: "2020-07-04"
+    },
+    {
+        features: "HS",
+        matNumber: 3,
+        registrationDate: "2020-07-04"
+    },
+    {
+        matNumber: 4,
+        registrationDate: "2020-07-04"
+    }
+]
+
 const templateDataChester = [
     {
         allMats: "1-6",
@@ -322,6 +382,26 @@ let loadGuests = async (facilityName, guestData) => {
     for (const guest of guestData) {
         guest.facilityId = facility.id;
         await GuestServices.insert(guest);
+    }
+}
+
+let loadRegistrationsAssigned = async (facilityName, firstName, lastName, matNumber, registrationData) => {
+    let facility = await FacilityServices.findByNameExact(facilityName);
+    let guest = await GuestServices.findByFacilityIdAndNameExact(facility.id, firstName, lastName);
+    for (const registration of registrationData) {
+        registration.comments = `${facility.name} registration for ${firstName} ${lastName}`;
+        registration.facilityId = facility.id;
+        registration.guestId = guest.id;
+        registration.matNumber = matNumber;
+        await RegistrationServices.insert(registration);
+    }
+}
+
+let loadRegistrationsUnassigned = async (facilityName, registrationData) => {
+    let facility = await FacilityServices.findByNameExact(facilityName);
+    for (const registration of registrationData) {
+        registration.facilityId = facility.id;
+        await RegistrationServices.insert(registration);
     }
 }
 

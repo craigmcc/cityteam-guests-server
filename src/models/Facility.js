@@ -42,7 +42,7 @@ module.exports = (sequelize) => {
 
         email: {
             type: DataTypes.STRING,
-            // TODO - validation
+            // TODO - email validation
         },
 
         name: {
@@ -132,9 +132,9 @@ module.exports = (sequelize) => {
 
     Facility.associate = function (models) {
         models.Facility.hasMany(models.Guest);
-        /*
-                models.Facility.hasMany(models.Registration);
-        */
+
+        models.Facility.hasMany(models.Registration);
+
         models.Facility.hasMany(models.Template);
 
     };

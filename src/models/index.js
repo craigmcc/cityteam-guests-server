@@ -46,18 +46,18 @@ db.sequelize.sync({
 
 // Configure Models ----------------------------------------------------------
 
-// TODO - Configure Models
 db.Ban = require("./Ban")(sequelize);
 db.Facility = require("./Facility")(sequelize);
 db.Guest = require("./Guest")(sequelize);
+db.Registration = require("./Registration")(sequelize);
 db.Template = require("./Template")(sequelize);
 
 // Configure Associations ----------------------------------------------------
 
-// TODO - Configure Associations
 db.Ban.associate(db);
 db.Facility.associate(db);
 db.Guest.associate(db);
+db.Registration.associate(db);
 db.Template.associate(db);
 
 // Export Database Interface -------------------------------------------------

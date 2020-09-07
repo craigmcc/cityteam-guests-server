@@ -12,7 +12,6 @@ const express = require("express");
 
 // Configuration Parameters --------------------------------------------------
 
-// TODO - support remote access as well when appropriate
 let corsOptions = {
     origin: "http://localhost:8081"
 };
@@ -33,10 +32,10 @@ app.get("/", (req, res) => {
         message: "Welcome to the CityTeam Guests Server Application"});
     });
 
-// TODO - Configure Routes
 require("./src/endpoints/BanEndpoints")(app);
 require("./src/endpoints/DevModeEndpoints")(app);
 require("./src/endpoints/FacilityEndpoints")(app);
+require("./src/endpoints/RegistrationEndpoints")(app);
 require("./src/endpoints/GuestEndpoints")(app);
 require("./src/endpoints/TemplateEndpoints")(app);
 

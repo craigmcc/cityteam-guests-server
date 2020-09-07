@@ -105,6 +105,8 @@ module.exports = (sequelize) => {
             }
         });
 
+        models.Guest.hasMany(models.Registration);
+
     };
 
     // Export Model ----------------------------------------------------------

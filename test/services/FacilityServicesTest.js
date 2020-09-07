@@ -45,8 +45,8 @@ const dataset = {
     },
 
     facility3full: {
-        name: 'Third Facility',
         active: true,
+        name: 'Third Facility',
         address1: 'Third Address 1 Facility',
         address2: 'Third Address 2',
         city: 'Third City',
@@ -384,7 +384,10 @@ describe("FacilityServices Tests", () => {
 
             it("should succeed", async () => {
 
-                let data = { name: "New Facility Name" };
+                let data = {
+                    active: true,
+                    name: "New Facility Name"
+                };
                 try {
                     await FacilityServices.insert(data);
                 } catch (err) {
