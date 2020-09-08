@@ -37,15 +37,18 @@ exports.all = async () => {
 }
 
 exports.find = async (id) => {
-    let result = await Registration.findByPk(id, {
+    let results = await Registration.findAll({
         include: {
             model: Guest
         },
+        where: {
+            id: id
+        }
     });
-    if (result === null) {
+    if (results.length === 0) {
         throw new NotFound(`id: Missing Registration ${id}`);
     } else {
-        return result;
+        return results[0];
     }
 }
 
@@ -116,7 +119,67 @@ exports.update = async (id, data) => {
 
 // Model Specific Methods ----------------------------------------------------
 
-// TODO - assign(registrationId, assignData) goes somewhere
+exports.assign = async (id, assign) => {
+
+    // NOTE:  Data for an assign does not correspond directly to a model,
+    // so we must do our own validations.
+
+    // Look up the original registration
+    let registration = await Registration.findByPk(id);
+    if (!registration) {
+        throw new NotFound(`id: Missing Registration ${id}`);
+    }
+
+    // Verify that this registration is either unassigned, or is already
+    // assigned to this guest (to allow information updates)
+    if (registration.guestId && (registration.guestId !== assign.guestId)) {
+        throw new BadRequest(`guestId: Registration is already assigned to someone else`);
+    }
+
+    // Assignment data must specify a valid guestId
+    let guest = await Guest.findByPk(assign.guestId);
+    if (!guest) {
+        throw new NotFound(`guestId: Missing Guest ${assign.guestId}`);
+    }
+
+    // If unassigned, verify that the specified guest belongs to the
+    // same facility as this registration.
+    if (!registration.guestId &&
+        (guest.facilityId !== registration.facilityId)) {
+        throw new BadRequest(`guestId: Guest does not belong to this facility`);
+    }
+
+    // If unassigned, check for another assignment for this guest
+    // on this registration date
+    if (!registration.guestId) {
+        let conditions = {
+            where: {
+                facilityId: registration.facilityId,
+                guestId: assign.guestId,
+                registrationDate: registration.registrationDate
+            }
+        }
+        let results = await Registration.findAll(conditions);
+        if (results.length > 0) {
+            throw new BadRequest(`guestId: Guest is already assigned to mat ` +
+                `${results[0].matNumber}`);
+        }
+    }
+
+    // Perform this assignment and return the updated registration
+    let data = {
+        ...registration.dataValues,
+        comments: assign.comments,
+        guestId: assign.guestId,
+        paymentAmount: assign.paymentAmount,
+        paymentType: assign.paymentType,
+        showerTime: assign.showerTime,
+        wakeupTime: assign.wakeupTime
+    }
+//    console.log("Updating with " + JSON.stringify(data, null, 2));
+    return await this.update(id, data);
+
+}
 
 exports.deassign = async (id) => {
 

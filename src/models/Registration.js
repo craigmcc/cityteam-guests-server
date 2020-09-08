@@ -13,6 +13,9 @@ const { DataTypes, Model, Op } = require("sequelize");
 
 module.exports = (sequelize) => {
 
+    const features = [ "H", "S", "HS", "SH" ];
+    const paymentTypes = [ "$$", "AG", "CT", "FM", "MM", "SW", "UK" ];
+
     class Registration extends Model {
     }
 
@@ -47,7 +50,14 @@ module.exports = (sequelize) => {
             allowNull: true,
             type: DataTypes.STRING,
             validate: {
-                // TODO - validate features
+                isValidValue: function(value, next) {
+                    if (value && (value.length > 0)) {
+                        if (features.indexOf(value) < 0) {
+                            next(`features: Features '${value}' is not valid`);
+                        }
+                    }
+                    return next();
+                }
             }
         },
 
@@ -87,7 +97,12 @@ module.exports = (sequelize) => {
             field: "paymentamount",
             type: DataTypes.DECIMAL(5, 2),
             validate: {
-                // TODO - must be positive if present?
+                isValidValue: function(value, next) {
+                    if (value && (value < 0)) {
+                        next(`paymentAmount: Payment Amount {$value} must be positive`);
+                    }
+                    return next();
+                }
             }
         },
 
@@ -96,7 +111,14 @@ module.exports = (sequelize) => {
             field: "paymenttype",
             type: DataTypes.STRING,
             validate: {
-                // TODO - must be valid from enumeration if present
+                isValidValue: function(value, next) {
+                    if (value && (value.length > 0)) {
+                        if (paymentTypes.indexOf(value) < 0) {
+                            next(`paymentType: Payment Type '${value}' is not valid`);
+                        }
+                    }
+                    return next();
+                }
             }
         },
 
@@ -105,9 +127,6 @@ module.exports = (sequelize) => {
             field: "registrationdate",
             type: DataTypes.DATEONLY,
             unique: "uniqueDateMatWithinFacility",
-            validate: {
-                // TODO - probably already covered
-            }
         },
 
         showerTime: {

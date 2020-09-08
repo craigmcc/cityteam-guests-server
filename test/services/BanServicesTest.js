@@ -387,7 +387,7 @@ describe("BanServices Tests", () => {
             });
 
             it.skip("should fail with overlapping ban dates", async () => {
-                // TODO - #insert() with overlapping ban dates
+                // TODO - #insert() test with overlapping ban dates
             });
 
             it("should succeed with valid data", async () => {

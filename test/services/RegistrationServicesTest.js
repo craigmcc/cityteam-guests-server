@@ -3,7 +3,6 @@
 // Internal Modules ----------------------------------------------------------
 
 const db = require ("../../src/models");
-const Ban = db.Ban;
 const Facility = db.Facility;
 const Guest = db.Guest;
 const Registration = db.Registration;
@@ -80,6 +79,7 @@ let facility2;
 
 let guest1_1;
 let guest1_2;
+let guest1_3;
 let guest2_1;
 
 let registration1_1_0;
@@ -95,20 +95,20 @@ describe("RegistrationServices Tests", () => {
     // Testing Hooks ---------------------------------------------------------
 
     before("#init", async () => {
-        await Ban.sync({
-            force: true
-        });
         await Facility.sync({
             force: true
         });
         await Guest.sync({
             force: true
         });
+        await Registration.sync({
+            force: true
+        });
     });
 
     beforeEach("#erase", async () => {
 
-        await Ban.destroy({
+        await Registration.destroy({
             cascade: true,
             truncate: true
         });
@@ -142,6 +142,12 @@ describe("RegistrationServices Tests", () => {
             facilityId: facility1.id
         }
         guest1_2 = await Guest.create(guest1_2Data);
+
+        let guest1_3Data = {
+            ...dataset.guest3Full,
+            facilityId: facility1.id
+        }
+        guest1_3 = await Guest.create(guest1_3Data);
 
         let registration1_1_0Data = {
             ...dataset.registrationEmpty,
@@ -220,6 +226,139 @@ describe("RegistrationServices Tests", () => {
 
                 let results = await RegistrationServices.all();
                 expect(results.length).to.equal(0);
+
+            });
+
+        });
+
+    });
+
+    describe("#assign()", () => {
+
+        context("with seed data", () => {
+
+            it("should fail with invalid id", async () => {
+
+                let id = 9999;
+                let assign = {
+                    guestId: guest1_3.id
+                }
+
+                try {
+                    await RegistrationServices.assign(id, assign);
+                    expect.fail("Should have thrown NotFound error");
+                } catch (err) {
+                    expect(err.message)
+                        .includes(`id: Missing Registration ${id}`);
+                }
+
+            });
+
+            it("should fail with guestId from different facility", async () => {
+
+                let id = registration1_2_0.id;
+                let assign = {
+                    guestId: guest2_1.id
+                }
+
+                try {
+                    await RegistrationServices.assign(id, assign);
+                    expect.fail("Should have thrown BadRequest error");
+                } catch (err) {
+                    expect(err.message)
+                        .includes("Guest does not belong to this facility");
+                }
+
+            })
+
+            it("should fail with invalid guestId", async () => {
+
+                let id = registration1_2_0.id;
+                let assign = {
+                    guestId: 9999
+                }
+
+                try {
+                    await RegistrationServices.assign(id, assign);
+                    expect.fail("Should have thrown NotFound error");
+                } catch (err) {
+                    expect(err.message)
+                        .includes(`guestId: Missing Guest ${assign.guestId}`);
+                }
+
+            });
+
+            it("should fail with already assigned registration", async () => {
+
+                let id = registration1_3_1.id;
+                let assign = {
+                    guestId: guest1_3.id
+                }
+
+                try {
+                    await RegistrationServices.assign(id, assign);
+                    expect.fail("Should have thrown BadRequest");
+                } catch (err) {
+                    expect(err.message)
+                        .includes("is already assigned to someone else");
+                }
+
+            });
+
+            it("should fail with second assignment on the same day", async () => {
+
+                let id = registration1_1_0.id;
+                let assign = {
+                    guestId: registration1_3_1.guestId
+                }
+
+                try {
+                    await RegistrationServices.assign(id, assign);
+                    expect.fail("Should have thrown BadRequest");
+                } catch (err) {
+                    expect(err.message)
+                        .includes(`Guest is already assigned to mat`);
+                }
+
+            })
+
+            it("should succeed with new assign to new guest", async () => {
+
+                let id = registration1_1_0.id;
+                let assign = {
+                    comments: "New assign for new guest",
+                    guestId: guest1_3.id
+                }
+
+                try {
+                    let result = await RegistrationServices.assign(id, assign);
+                    expect(result.guestId).to.equal(assign.guestId);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
+
+            it("should succeed with updated assign to same guest", async () => {
+
+                let id = registration1_3_1.id;
+                let assign = {
+                    comments: "Updated assign for same guest",
+                    guestId: registration1_3_1.guestId
+                }
+
+                try {
+/*
+                    console.log(`Updated(${id}, ` +
+                        JSON.stringify(assign) +
+                        ") for registration " +
+                        JSON.stringify(registration1_3_1.dataValues, null, 2));
+*/
+                    let result = await RegistrationServices.assign(id, assign);
+                    expect(result.guestId).to.equal(assign.guestId);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
 
             });
 

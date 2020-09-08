@@ -75,7 +75,7 @@ module.exports = (app) => {
 
     // PUT /:id - Update model by id
     router.put("/:id", async (req, res) => {
-        // TODO - disallow updates this way?
+        // TODO - disallow assigned updates this way?
         try {
             res.send(await RegistrationServices.update(req.params.id, req.body));
         } catch (err) {
@@ -93,7 +93,23 @@ module.exports = (app) => {
 
     // Model Specific Endpoints ----------------------------------------------
 
-    // TODO - /:id/assign goes somewhere
+    // POST /:id/assign - Assign comments/guestId/paymentAmount/paymentType/
+    //   showerTime/wakeupTime by id
+    router.post("/:id/assign", async (req, res) => {
+        try {
+            res.send(await RegistrationServices.assign(req.params.id, req.body));
+        } catch (err) {
+            if (err instanceof BadRequest) {
+                res.status(400).send(err.message);
+            } else if (err instanceof NotFound) {
+                res.status(404).send(err.message);
+            } else {
+                console.log("RegistrationEndpoints.assign() error: " +
+                    JSON.stringify(err, null, 2));
+                res.status(500).send(err.message);
+            }
+        }
+    })
 
     // POST /:id/deassign - Deassign model by id
     router.post("/:id/deassign", async (req, res) => {
