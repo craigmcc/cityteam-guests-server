@@ -13,7 +13,7 @@ const express = require("express");
 // Configuration Parameters --------------------------------------------------
 
 let corsOptions = {
-    origin: "http://localhost:8081"
+    origin: "*"
 };
 let PORT = process.env.PORT || 8082;
 
