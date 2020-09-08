@@ -235,9 +235,14 @@ describe("BanServices Tests", () => {
 
             it("should succeed on matched id", async () => {
 
-                let result = await BanServices.find(ban1_1_1.id);
-                expect(result.banFrom).to.equal(ban1_1_1.banFrom);
-                expect(result.banTo).to.equal(ban1_1_1.banTo);
+                try {
+                    let result = await BanServices.find(ban1_1_1.id);
+                    expect(result.id).to.equal(ban1_1_1.id);
+                    expect(result.banFrom).to.equal(ban1_1_1.banFrom);
+                    expect(result.banTo).to.equal(ban1_1_1.banTo);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
 
             });
 
@@ -385,7 +390,7 @@ describe("BanServices Tests", () => {
                 // TODO - #insert() with overlapping ban dates
             });
 
-            it("should succeed with valid arguments", async () => {
+            it("should succeed with valid data", async () => {
 
                 let data = {
                     ...dataset.ban4Full,
@@ -444,7 +449,7 @@ describe("BanServices Tests", () => {
 
         context("with seed data", () => {
 
-            it("should suceed with no changes", async () => {
+            it("should succeed with no changes", async () => {
 
                 let data = ban2_1_1.dataValues;
 
@@ -457,7 +462,7 @@ describe("BanServices Tests", () => {
 
             });
 
-            it("should suceed with valid changes", async () => {
+            it("should succeed with valid changes", async () => {
 
                 let data = {
                     ...ban2_1_1.dataValues,

@@ -136,3 +136,23 @@ exports.findByFacilityIdAndRegistrationDate = async (facilityId, registrationDat
     return await Registration.findAll(conditions);
 
 }
+
+exports.findByGuestId = async (guestId) => {
+
+    let conditions = {
+        include: {
+            model: Guest
+        },
+        order: [
+            ["facilityId", "ASC"],
+            ["registrationDate", "ASC"],
+            ["matNumber", "ASC"]
+        ],
+        where: {
+            guestId: guestId
+        }
+    }
+
+    return await Registration.findAll(conditions);
+
+}

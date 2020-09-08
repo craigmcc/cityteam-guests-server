@@ -7,7 +7,7 @@ var Guest; // Filled in by associate()
 
 // External Modules ----------------------------------------------------------
 
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes, Model, Op } = require("sequelize");
 
 // Registration Model --------------------------------------------------------
 
@@ -130,7 +130,27 @@ module.exports = (sequelize) => {
         timestamps: true,
         updatedAt: "updated",
         validate: {
-            // TODO - do we care about anything model-wide?
+            isMatNumberRegistrationDateUniqueWithinFacility: function(next) {
+                let conditions = {
+                    where: {
+                        facilityId: this.facilityId,
+                        matNumber: this.matNumber,
+                        registrationDate: this.registrationDate
+                    }
+                };
+                if (this.id) {
+                    conditions.where["id"] = {[Op.ne]: this.id};
+                }
+                Registration.count(conditions)
+                    .then(found => {
+                        return (found !== 0)
+                            ? next(`matNumber: Mat number ${this.matNumber} ` +
+                                   `already in use on registration date ${this.registrationDate} ` +
+                                   `within this facility`)
+                            : next();
+                    })
+                    .catch(next);
+            }
         },
         version: true,
 

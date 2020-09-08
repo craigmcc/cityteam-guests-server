@@ -7,6 +7,7 @@ const NotFound = require("../errors/NotFound");
 const db = require("../models");
 const BanServices = require("../services/BanServices");
 const GuestServices = require("../services/GuestServices");
+const RegistrationServices = require("../services/RegistrationServices");
 
 // External Modules ----------------------------------------------------------
 
@@ -99,6 +100,17 @@ module.exports = (app) => {
             res.send(await BanServices.findByGuestId(req.params.id));
         } catch (err) {
             console.error("GuestEndpoints.findBansByGuestId error: " +
+                JSON.stringify(err, null, 2));
+            res.status(500).send(err.message);
+        }
+    });
+
+    // GET /:id/registrations - Find registrations by id
+    router.get("/:id/registrations", async (req, res) => {
+        try {
+            res.send(await RegistrationServices.findByGuestId(req.params.id));
+        } catch (err) {
+            console.error("GuestEndpoints.findRegistrationsByGuestId error: " +
                 JSON.stringify(err, null, 2));
             res.status(500).send(err.message);
         }

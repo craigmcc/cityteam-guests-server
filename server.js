@@ -35,8 +35,8 @@ app.get("/", (req, res) => {
 require("./src/endpoints/BanEndpoints")(app);
 require("./src/endpoints/DevModeEndpoints")(app);
 require("./src/endpoints/FacilityEndpoints")(app);
-require("./src/endpoints/RegistrationEndpoints")(app);
 require("./src/endpoints/GuestEndpoints")(app);
+require("./src/endpoints/RegistrationEndpoints")(app);
 require("./src/endpoints/TemplateEndpoints")(app);
 
 // Start Server --------------------------------------------------------------
