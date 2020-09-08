@@ -227,6 +227,56 @@ describe("RegistrationServices Tests", () => {
 
     });
 
+    describe("#deassign()", () => {
+
+        context("with seed data", () => {
+
+            it("should fail with invalid id", async () => {
+
+                let invalidId = 9999;
+
+                try {
+                    await RegistrationServices.deassign(invalidId);
+                    expect.fail("Should have thrown NotFound error");
+                } catch (err) {
+                    expect(err.message)
+                        .includes(`id: Missing Registration ${invalidId}`);
+                }
+
+            });
+
+            it("should fail with unassigned id", async () => {
+
+                let unassignedId = registration1_1_0.id;
+
+                try {
+                    await RegistrationServices.deassign(unassignedId);
+                    expect.fail("Should have thrown BadRequest error");
+                } catch (err) {
+                    expect(err.message)
+                        .includes(`id: Registration ${unassignedId} is not currently assigned`);
+                }
+
+            });
+
+            it("should succeed with assigned id", async () => {
+
+                let data = registration1_2_2.dataValues;
+
+                try {
+                    let result = await RegistrationServices.deassign(data.id);
+                    expect(result.id).to.equal(data.id);
+                    expect(result.guestId).to.be.null;
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
+
+        });
+
+    });
+
     describe("#find()", () => {
 
         context("with seed data", () => {

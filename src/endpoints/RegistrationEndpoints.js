@@ -95,7 +95,23 @@ module.exports = (app) => {
 
     // TODO - /:id/assign goes somewhere
 
-    // TODO - /:id/deassign goes somewhere
+    // POST /:id/deassign - Deassign model by id
+    router.post("/:id/deassign", async (req, res) => {
+        try {
+            res.send(await RegistrationServices.deassign(req.params.id));
+        } catch (err) {
+            if (err instanceof BadRequest) {
+                res.status(400).send(err.message);
+            } else if (err instanceof NotFound) {
+                res.status(404).send(err.message);
+            } else {
+                console.log("RegistrationEndpoints.deassign() error: " +
+                    JSON.stringify(err, null, 2));
+                res.status(500).send(err.message);
+            }
+        }
+    })
+
 
     // Export Routes ---------------------------------------------------------
 

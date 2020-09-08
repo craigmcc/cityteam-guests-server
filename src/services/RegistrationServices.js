@@ -37,7 +37,11 @@ exports.all = async () => {
 }
 
 exports.find = async (id) => {
-    let result = await Registration.findByPk(id);
+    let result = await Registration.findByPk(id, {
+        include: {
+            model: Guest
+        },
+    });
     if (result === null) {
         throw new NotFound(`id: Missing Registration ${id}`);
     } else {
@@ -114,7 +118,51 @@ exports.update = async (id, data) => {
 
 // TODO - assign(registrationId, assignData) goes somewhere
 
-// TODO - deassign(registrationId) goes somewhere
+exports.deassign = async (id) => {
+
+    let original = await Registration.findByPk(id);
+    if (!original) {
+        throw new NotFound(`id: Missing Registration ${id}`);
+    }
+    if (!original.guestId) {
+        throw new BadRequest(`id: Registration ${id} is not currently assigned`);
+    }
+
+    let data = {
+        ...original.dataValues,
+        comments: null,
+        guestId: null,
+        paymentAmount: null,
+        paymentType: null,
+        showerTime: null,
+        wakeupTime: null
+    }
+    let transaction;
+    try {
+        transaction = await db.sequelize.transaction();
+        data.id = id;
+        let result = await Registration.update(data, {
+            fields: fieldsWithId,
+            transaction: transaction,
+            where: { id: id }
+        });
+        if (result[0] === 0) {
+            throw new Error("id: Update did not occur for id " + id);
+        }
+        await transaction.commit();
+        transaction = null;
+        return Registration.findByPk(id);
+    } catch (err) {
+        if (transaction) {
+            await transaction.rollback();
+        }
+        if (err instanceof db.Sequelize.ValidationError) {
+            throw new BadRequest(err.message);
+        } else {
+            throw err;
+        }
+    }
+}
 
 exports.findByFacilityIdAndRegistrationDate = async (facilityId, registrationDate) => {
 
