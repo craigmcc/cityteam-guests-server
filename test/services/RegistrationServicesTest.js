@@ -5,8 +5,10 @@
 const db = require ("../../src/models");
 const Facility = db.Facility;
 const Guest = db.Guest;
+const MatsList = require("../../src/util/MatsList");
 const Registration = db.Registration;
 const RegistrationServices = require("../../src/services/RegistrationServices");
+const Template = db.Template;
 
 // External Modules ----------------------------------------------------------
 
@@ -70,6 +72,15 @@ const dataset = {
         registrationDate: "2020-07-04"
     },
 
+    // Template Data ---------------------------------------------------------
+
+    template1Full: {
+        allMats: "1-5,11-15",
+        handicapMats: "3,5,11,13",
+        name: "Test Template",
+        socketMats: "1,5,11,15"
+    }
+
 }
 
 // Local Variables -----------------------------------------------------------
@@ -87,6 +98,8 @@ let registration1_2_0;
 let registration1_2_2; // Different date
 let registration1_3_1;
 let registration1_4_2;
+
+let template1;
 
 // RegistrationServices Tests ------------------------------------------------
 
@@ -187,6 +200,12 @@ describe("RegistrationServices Tests", () => {
             matNumber: 4
         }
         registration1_4_2 = await Registration.create(registration1_4_2Data);
+
+        let template1Data = {
+            ...dataset.template1Full,
+            facilityId: facility1.id
+        }
+        template1 = await Template.create(template1Data);
 
         // Facility 2
 
@@ -529,6 +548,63 @@ describe("RegistrationServices Tests", () => {
                 }
 
             })
+
+        });
+
+    });
+
+    describe("#generate()", () => {
+
+        context("with seed data", () => {
+
+            it("should fail on existing registrations", async () => {
+
+                let templateId = template1.id;
+                let registrationDate = "2020-07-04";
+
+                try {
+                    await RegistrationServices
+                        .generate(templateId, registrationDate);
+                    expect.fail("Should have thrown BadRequest");
+                } catch (err) {
+                    expect(err.message)
+                        .includes("registrationDate: There are already ");
+                }
+
+            });
+
+            it("should fail on invalid templateId", async () => {
+
+                let templateId = 9999;
+                let registrationDate = "2020-07-04";
+
+                try {
+                    await RegistrationServices
+                        .generate(templateId, registrationDate);
+                    expect.fail("Should have thrown NotFound");
+                } catch (err) {
+                    expect(err.message)
+                        .includes(`templateId: Missing Template ${templateId}`);
+                }
+
+            });
+
+            it("should succeed on valid parameters", async () => {
+
+                let templateId = template1.id;
+                let registrationDate = "2020-07-06";
+
+                try {
+                    let results = await RegistrationServices
+                        .generate(templateId, registrationDate);
+                    let allMatsList =
+                        new MatsList(template1.allMats).exploded();
+                    expect(results.length).to.equal(allMatsList.length);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
 
         });
 

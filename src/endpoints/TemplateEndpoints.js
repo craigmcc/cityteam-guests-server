@@ -5,6 +5,7 @@
 const BadRequest = require("../errors/BadRequest");
 const NotFound = require("../errors/NotFound");
 const db = require("../models");
+const RegistrationServices = require("../services/RegistrationServices");
 const TemplateServices = require("../services/TemplateServices");
 
 // External Modules ----------------------------------------------------------
@@ -84,6 +85,29 @@ module.exports = (app) => {
                 res.status(404).send(err.message);
             } else {
                 console.log("TemplateEndpoints.update() error: " +
+                    JSON.stringify(err, null, 2));
+                res.status(500).send(err.message);
+            }
+        }
+    })
+
+    // Model Specific Endpoints ----------------------------------------------
+
+    // POST /:id/registrations/:registrationDate
+    // - Generate empty registrations
+    router.post("/:id/generate/:registrationDate", async (req, res) => {
+        try {
+            res.send(await RegistrationServices.generate(
+                req.params.id,
+                req.params.registrationDate
+            ));
+        } catch (err) {
+            if (err instanceof BadRequest) {
+                res.status(400).send(err.message);
+            } else if (err instanceof NotFound) {
+                res.status(404).send(err.message);
+            } else {
+                console.log("RegistrationEndpoints.deassign() error: " +
                     JSON.stringify(err, null, 2));
                 res.status(500).send(err.message);
             }

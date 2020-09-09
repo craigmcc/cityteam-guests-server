@@ -128,7 +128,6 @@ module.exports = (app) => {
         }
     })
 
-
     // Export Routes ---------------------------------------------------------
 
     app.use("/api/registrations", router);

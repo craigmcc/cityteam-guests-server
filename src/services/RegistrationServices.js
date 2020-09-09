@@ -19,7 +19,9 @@ const fields = [
 ];
 const fieldsWithId = [...fields, "id"];
 const Guest = db.Guest;
+const MatsList = require("../util/MatsList");
 const Registration = db.Registration;
+const Template = db.Template
 
 // External Modules ----------------------------------------------------------
 
@@ -50,6 +52,72 @@ exports.find = async (id) => {
     } else {
         return results[0];
     }
+}
+
+exports.generate = async (templateId, registrationDate) => {
+
+    // Look up the requested template and analyze needed mats
+    let template = await Template.findByPk(templateId);
+    if (!template) {
+        throw new NotFound(`templateId: Missing Template ${templateId}`);
+    }
+    let allMats = new MatsList(template.allMats);
+    let handicapMats = template.handicapMats ? new MatsList(template.handicapMats) : null;
+    let socketMaps = template.socketMats ? new MatsList(template.socketMats) : null;
+
+    // Verify that there are no registrations for this combination already
+    let conditions = {
+        where: {
+            facilityId: template.facilityId,
+            registrationDate: registrationDate
+        }
+    }
+    let count = await Registration.count(conditions);
+    if (count > 0) {
+        throw new BadRequest(`registrationDate: There are already ${count} registrations for ${registrationDate}`);
+    }
+
+    // Accumulate the requested (unassigned) registrations
+    let inputs = [];
+
+    allMats.exploded().forEach(matNumber => {
+
+        let features = "";
+        if (handicapMats && handicapMats.isMemberOf(matNumber)) {
+            features = features + "H";
+        }
+        if (socketMaps && socketMaps.isMemberOf(matNumber)) {
+            features = features + "S";
+        }
+        if (features.length === 0) {
+            features = null;
+        }
+
+        let data = {
+            facilityId: template.facilityId,
+            features: features,
+            guestId: null,
+            matNumber: matNumber,
+            registrationDate: registrationDate
+        }
+        inputs.push(data);
+
+    });
+
+    // Persist and return the requested registrations
+    let outputs = await Registration.bulkCreate(inputs, {
+        fields: fields,
+        validate: true
+    })
+    return outputs;
+
+}
+
+const generateRegistration = async (data, transaction) => {
+    return await Registration.create(data, {
+        fields: fields,
+        transaction: transaction
+    });
 }
 
 exports.insert = async (data) => {
