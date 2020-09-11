@@ -18,6 +18,183 @@ const TemplateServices = require("./TemplateServices");
 
 // Public Methods ------------------------------------------------------------
 
+/**
+ * <p>Process a single imported registration, creating the corresponding
+ * guest if necessary.</p>
+ *
+ * @param facility Facility for which to create a registration
+ * @param imported JSON of a single row of imported data (parsed from CSV)
+ *
+ * @return Result structure with either "problems" (array of message/imported/resolution)
+ *         or "registration" (the Registration that was created)
+ *
+ * @throws Error that was not caught
+ */
+exports.imported = async (facility, imported) => {
+
+    let fatalError = false;
+    let result = {
+        problems: []
+    };
+    let registration = {
+        facilityId: facility.id
+    };
+
+    // Process registrationDate
+    if (!imported.registrationDate || (imported.registrationDate.length === 0)) {
+        result.problems.push({
+            message: "Missing registrationDate",
+            imported: imported,
+            resolution: "Skipping this import"
+        });
+        fatalError = true;
+    } else {
+        try {
+            registration.registrationDate = new Date(imported.registrationDate)
+                .toISOString()
+                .split("T")[0];
+        } catch (err) {
+            result.problems.push({
+                message: "Cannot parse registrationDate: " + err,
+                imported: imported,
+                resolution: "Skipping this import"
+            });
+            fatalError = true;
+        }
+    }
+
+    // Process matNumber and optional features
+    if (imported.matNumber && (imported.matNumber.length > 0)) {
+        // TODO - parse matNumber and optional features
+        let input = imported.matNumber;
+        let featuring = false;
+        let features = "";
+        let matNumber = 0;
+        for (let i = 0; i < input.length; i++) {
+            let c = input.charAt(i);
+            if ((c >= '0') && (c <= '9')) {
+                if (featuring) {
+                    result.problems.push({
+                        message: `Cannot parse matNumber from '${input}'`,
+                        imported: imported,
+                        resolution: "Skipping this import"
+                    });
+                    fatalError = true;
+                } else {
+                    matNumber = (matNumber * 10) + new Number(c);
+                }
+            } else {
+                featuring = true;
+                features += c;
+            }
+            if (matNumber > 0) {
+                registration.matNumber = matNumber;
+            }
+        }
+        if (features.length >= 1) {
+            if (validFeatures.indexOf(features) >= 0) {
+                registration.features = features;
+            } else {
+                result.problems.push({
+                    message: `Cannot parse valid features from '${features}'`,
+                    imported: imported,
+                    resolution: "Skipping storing features"
+                });
+                // This error is not fatal
+            }
+        }
+    } else {
+        result.problems.push({
+            message: "Missing matNumber",
+            imported: imported,
+            resolution: "Skipping this import"
+        });
+        fatalError = true;
+    }
+
+    // Process firstName and lastName (only if no fatal error so far)
+    let guest = null;
+    if ((imported.firstName && (imported.firstName.length > 0)) &&
+        (imported.lastName && (imported.lastName.length > 0)) &&
+        (!fatalError)) {
+        try {
+            guest = await GuestServices.findByFacilityIdAndNameExact
+                (facility.id,
+                 capitalize(imported.firstName),
+                 capitalize(imported.lastName))
+        } catch (err) {
+            if (!err.message || !err.message.includes("Missing")) {
+                result.problems.push({
+                    message: "Error finding guest: " + err,
+                    imported: imported,
+                    resolution: "Skipping this import"
+                });
+                fatalError = true;
+            } else {
+                try {
+                    guest = await GuestServices.insert({
+                        facilityId: facility.id,
+                        firstName: capitalize(imported.firstName),
+                        lastName: capitalize(imported.lastName)
+                    });
+                } catch (err2) {
+                    result.problems.push({
+                        message: "Error inserting guest: " + err,
+                        imported: imported,
+                        resolution: "Skipping this import"
+                    });
+                    fatalError = true;
+                }
+            }
+        }
+        if (guest) {
+            registration.guestId = guest.id;
+        }
+    }
+
+    // Process comments, paymentType, and paymentAmount if guest is present
+    if (guest) {
+        if (imported.comments && (imported.comments.length > 0)) {
+            registration.comments = imported.comments;
+        }
+        if (imported.paymentType) {
+            let upperCasedPaymentType = imported.paymentType.toUpperCase();
+            if (validPaymentTypes.indexOf(upperCasedPaymentType) >= 0) {
+                registration.paymentType = upperCasedPaymentType;
+            } else {
+                result.problems.push({
+                    message:
+                        `Cannot parse valid features from '${imported.paymentType}'`,
+                    imported: imported,
+                    resolution: "Setting features to UK (unknown)"
+                });
+                registration.paymentType = "UK";
+                // This is not a fatal error
+            }
+            if (registration.paymentType === "$$") {
+                registration.paymentAmount = 5.00;
+            }
+        }
+    }
+
+    // Persist the completed registration and return it
+    if (!fatalError) {
+        try {
+            let inserted = await RegistrationServices.insert(registration);
+            result.registration = inserted;
+        } catch (err) {
+            result.problems.push({
+                message: "Error inserting registration: " + err,
+                imported: imported,
+                resolution: "Skipping this import"
+            });
+//            fatalError = true;
+        }
+    }
+    return result;
+
+}
+
 exports.reload = async () => {
 
     // Resynchronize database metadata
@@ -361,6 +538,14 @@ const templateDataSanJose = [
 
 // Private Methods -----------------------------------------------------------
 
+let capitalize = (input) => {
+    if (input.length > 1) {
+        return input.charAt(0).toUpperCase() + input.slice(1);
+    } else {
+        return input.toUpperCase();
+    }
+}
+
 let loadBans = async (facilityName, firstName, lastName, banData) => {
     let facility = await FacilityServices.findByNameExact(facilityName);
     let guest = await GuestServices.findByFacilityIdAndNameExact
@@ -413,3 +598,5 @@ let loadTemplates = async (facilityName, templateData) => {
     }
 }
 
+const validFeatures = ["H", "S", "HS", "SH"];
+const validPaymentTypes = [ "$$", "AG", "CT", "FM", "MM", "SW", "UK" ];

@@ -22,6 +22,11 @@ let PORT = process.env.PORT || 8082;
 const app = express();
 // app.set("json spaces", 2); // Generate pretty JSON in responses
 app.use(bodyParser.json());
+// May need option "limit" on following to set maximum input bytes accepted
+app.use(bodyParser.text({
+    limit: "2mb",
+    type: "text/csv"
+}));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 

@@ -3,3 +3,4 @@ package-lock.json
 .idea
 .nyc_output
 test/database.sqlite
+shelter.log*
