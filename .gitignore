@@ -1,5 +1,6 @@
 node_modules
 package-lock.json
+.env.*
 .idea
 .nyc_output
 test/database.sqlite

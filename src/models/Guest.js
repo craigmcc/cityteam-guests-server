@@ -2,7 +2,7 @@
 
 // Internal Modules ----------------------------------------------------------
 
-var Facility; // Filled in by associate()
+let Facility; // Filled in by associate()
 
 // External Modules ----------------------------------------------------------
 

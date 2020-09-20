@@ -2,25 +2,26 @@
 
 // Internal Modules ----------------------------------------------------------
 
-const dbConfig = require("../config/db.config");
-
 // External Modules ----------------------------------------------------------
 
+require("custom-env").env(true);
 const Sequelize = require("sequelize");
 
 // Configure Database Interface ----------------------------------------------
 
+console.info(`Configuring database for ${process.env.NODE_ENV} mode`);
+
 const sequelize = (process.env.NODE_ENV === "production")
-    ? new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-        host: dbConfig.HOST,
-        dialect: dbConfig.dialect,
+    ? new Sequelize(process.env.DB_DB, process.env.DB_USER, process.env.DB_PASSWORD, {
+        host: process.env.DB_HOST,
+        dialect: process.env.DB_DIALECT,
 //        logging: console.log,
         logging: false,
         pool: {
-            acquire: dbConfig.pool.acquire,
-            idle: dbConfig.pool.idle,
-            max: dbConfig.pool.max,
-            min: dbConfig.pool.min
+            acquire: parseInt(process.env.DB_POOL_ACQUIRE),
+            idle: parseInt(process.env.DB_POOL_IDLE),
+            max: parseInt(process.env.DB_POOL_MAX),
+            min: parseInt(process.env.DB_POOL_MIN),
         }
     })
     : new Sequelize('database', 'username', 'password', {
