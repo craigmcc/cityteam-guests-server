@@ -25,8 +25,7 @@ module.exports = (app) => {
         try {
             res.send(await FacilityServices.findByActive());
         } catch (err) {
-            console.error("FacilityEndpoints.findByActive error: " +
-                JSON.stringify(err, null, 2));
+            console.error("FacilityEndpoints.findByActive error: ", err);
             res.status(500).send(err.message);
         }
     })
@@ -36,8 +35,7 @@ module.exports = (app) => {
         try {
             res.send(await FacilityServices.findByName(req.params.name));
         } catch (err) {
-            console.error("FacilityEndpoints.findByName error: " +
-                JSON.stringify(err, null, 2));
+            console.error("FacilityEndpoints.findByName error: ", err);
             res.status(500).send(err.message);
         }
     })
@@ -50,8 +48,7 @@ module.exports = (app) => {
             if (err instanceof NotFound) {
                 res.status(404).send(err.message);
             } else {
-                console.error("FacilityEndpoints.findByName error: " +
-                    JSON.stringify(err, null, 2));
+                console.error("FacilityEndpoints.findByName error: ", err);
                 res.status(500).send(err.message);
             }
         }
@@ -64,8 +61,7 @@ module.exports = (app) => {
         try {
             res.send(await FacilityServices.all());
         } catch (err) {
-            console.error("FacilityEndpoints.all error: " +
-                JSON.stringify(err, null, 2));
+            console.error("FacilityEndpoints.all error: ", err);
             res.status(500).send(err.message);
         }
     });
@@ -78,8 +74,7 @@ module.exports = (app) => {
             if (err instanceof db.Sequelize.ValidationError) {
                 res.status(400).send(err.message);
             } else {
-                console.error("FacilityEndpoints.insert error: " +
-                    JSON.stringify(err, null, 2));
+                console.error("FacilityEndpoints.insert error: ", err);
                 res.status(500).send(err.message);
             }
         }
@@ -93,8 +88,7 @@ module.exports = (app) => {
             if (err instanceof NotFound) {
                 console.status(404).send(err.message);
             } else {
-                console.error("FacilityEndpoints.delete error: " +
-                    JSON.stringify(err, null, 2));
+                console.error("FacilityEndpoints.delete error: ", err);
                 res.status(500).send(err.message);
             }
         }
@@ -108,8 +102,7 @@ module.exports = (app) => {
             if (err instanceof NotFound) {
                 res.status(404).send(err.message);
             } else {
-                console.log("FacilityEndpoints.find() error: " +
-                    JSON.stringify(err, null, 2));
+                console.log("FacilityEndpoints.find() error: ", err);
                 res.status(500).send(err.message);
             }
         }
@@ -125,8 +118,7 @@ module.exports = (app) => {
             } else if (err instanceof NotFound) {
                 res.status(404).send(err.message);
             } else {
-                console.log("FacilityEndpoints.update() error: " +
-                    JSON.stringify(err, null, 2));
+                console.log("FacilityEndpoints.update() error: ", err);
                 res.status(500).send(err.message);
             }
         }
@@ -139,8 +131,7 @@ module.exports = (app) => {
         try {
             res.send(await GuestServices.findByFacilityId(req.params.id));
         } catch (err) {
-            console.error("FacilityEndpoints.findGuestsByFacilityId error: " +
-                JSON.stringify(err, null, 2));
+            console.error("FacilityEndpoints.findGuestsByFacilityId error: ", err);
             res.status(500).send(err.message);
         }
     });
@@ -151,8 +142,7 @@ module.exports = (app) => {
             res.send(await GuestServices.findByFacilityIdAndName
                 (req.params.id, req.params.name));
         } catch (err) {
-            console.error("FacilityEndpoints.findGuestsByFacilityIdAndName error: " +
-                JSON.stringify(err, null, 2));
+            console.error("FacilityEndpoints.findGuestsByFacilityIdAndName error: ", err);
             res.status(500).send(err.message);
         }
     });
@@ -163,9 +153,12 @@ module.exports = (app) => {
             res.send(await GuestServices.findByFacilityIdAndNameExact
                 (req.params.id, req.params.firstName, req.params.lastName));
         } catch (err) {
-            console.error("FacilityEndpoints.findGuestsByFacilityIdAndNameExact error: " +
-                JSON.stringify(err, null, 2));
-            res.status(500).send(err.message);
+            if (err instanceof NotFound) {
+                res.status(404).send(err.message);
+            } else {
+                console.error("FacilityEndpoints.findGuestsByFacilityIdAndNameExact error: ", err);
+                res.status(500).send(err.message);
+            }
         }
     });
 
@@ -175,8 +168,7 @@ module.exports = (app) => {
             res.send(await RegistrationServices.findByFacilityIdAndRegistrationDate
                 (req.params.id, req.params.registrationDate));
         } catch (err) {
-            console.error("FacilityEndpoints.findRegistrationsByFacilityIdAndRegistrationDate error: " +
-                JSON.stringify(err, null, 2));
+            console.error("FacilityEndpoints.findRegistrationsByFacilityIdAndRegistrationDate error: ", err);
             req.status(500).send(err.message);
         }
     });
@@ -188,8 +180,7 @@ module.exports = (app) => {
         try {
             res.send(await TemplateServices.findByFacilityId(req.params.id));
         } catch (err) {
-            console.error("FacilityEndpoints.findTemplatesByFacilityId error: " +
-                JSON.stringify(err, null, 2));
+            console.error("FacilityEndpoints.findTemplatesByFacilityId error: ", err);
             res.status(500).send(err.message);
         }
     });
@@ -200,8 +191,7 @@ module.exports = (app) => {
             res.send(await TemplateServices.findByFacilityIdAndName
             (req.params.id, req.params.name));
         } catch (err) {
-            console.error("FacilityEndpoints.findTemplatesByFacilityIdAndName error: " +
-                JSON.stringify(err, null, 2));
+            console.error("FacilityEndpoints.findTemplatesByFacilityIdAndName error: ", err);
             res.status(500).send(err.message);
         }
     });
@@ -212,9 +202,12 @@ module.exports = (app) => {
             res.send(await TemplateServices.findByFacilityIdAndNameExact
             (req.params.id, req.params.name));
         } catch (err) {
-            console.error("FacilityEndpoints.findTemplatesByFacilityIdAndNameExact error: " +
-                JSON.stringify(err, null, 2));
-            res.status(500).send(err.message);
+            if (err instanceof NotFound) {
+                res.status(404).send(err.message);
+            } else {
+                console.error("FacilityEndpoints.findTemplatesByFacilityIdAndNameExact error: ", err);
+                res.status(500).send(err.message);
+            }
         }
     });
 
