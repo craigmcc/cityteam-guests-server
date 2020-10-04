@@ -102,7 +102,7 @@ describe("FacilityServices Tests", () => {
                             }
                         }
                         previousKey = currentKey;
-                    })
+                    });
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);
                 }
@@ -116,7 +116,6 @@ describe("FacilityServices Tests", () => {
                 await loadTemplates(facilityMatch, templatesData0);
 
                 try {
-
                     let results = await FacilityServices.all({
                         withTemplates: ""
                     });
@@ -215,6 +214,7 @@ describe("FacilityServices Tests", () => {
             it("should fail on mismatched id", async () => {
 
                 let facilityId = 9999;
+
                 try {
                     await FacilityServices.find(facilityId);
                     expect.fail("Should have thrown NotFound");

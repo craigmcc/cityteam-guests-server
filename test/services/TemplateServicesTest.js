@@ -7,65 +7,22 @@ const Facility = db.Facility;
 const Template = db.Template;
 const TemplateServices = require("../../src/services/TemplateServices");
 
+const BadRequest = require("../../src/errors/BadRequest");
+const NotFound = require("../../src/errors/NotFound");
+
+const {
+    facilitiesData0, facilitiesData1, loadFacilities,
+    templatesData0, templatesData1, loadTemplates,
+} = require("../util/SeedData");
+
+const {
+    templateKey,
+} = require("../util/SortKeys");
+
 // External Modules ----------------------------------------------------------
 
 const chai = require("chai");
 const expect = chai.expect;
-
-// Test Data -----------------------------------------------------------------
-
-// NOTE: Store each Facility then capture facilityId for subordinate objects
-const dataset = {
-
-    // Facility Data ---------------------------------------------------------
-
-    facility1full: {
-        active: true,
-        address1: 'First Address 1 Controller',
-        address2: 'First Address 2',
-        city: 'First City',
-        name: 'First Facility',
-        state: 'OR',
-        zipCode: '99999'
-    },
-
-    facility2full: {
-        active: true,
-        address1: 'Second Address 1 Controller',
-        address2: 'Second Address 2',
-        city: 'Second City',
-        name: 'Second Facility',
-        state: 'WA',
-        zipCode: '88888'
-    },
-
-    // Template Data ---------------------------------------------------------
-
-    template1Full: {
-        allMats: "1-24",
-        comments: null,
-        handicapMats: "2,4,6",
-        name: "Emergency Fewer Mats",
-        socketMats: "6-10,12",
-    },
-
-    template2Full: {
-        allMats: "1-58",
-        comments: null,
-        handicapMats: "2,4,6",
-        name: "Standard Mats",
-        socketMats: "6-10,12",
-    },
-
-    template3Full: {
-        allMats: "1-12",
-        comments: null,
-        handicapMats: "2,4,6",
-        name: "Extremely Fewer Mats",
-        socketMats: "6-10,12",
-    },
-
-};
 
 // TemplateServices Tests ----------------------------------------------------
 
@@ -101,33 +58,69 @@ describe("TemplateServices Tests", () => {
 
             it("should find all objects", async () => {
 
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Template.bulkCreate(data1, {
-                    validate: true
-                });
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[1].dataValues;
+                await loadTemplates(facilityMatch, templatesData0);
 
-                let facility2 = await Facility.create(dataset.facility2full);
-                let data2 = [
-                    dataset.template1Full,
-                    dataset.template3Full
-                ];
-                data2.forEach(datum => {
-                    datum.facilityId = facility2.id;
-                })
-                await Template.bulkCreate(data2, {
-                    validate: true
-                });
+                try {
+                    let results = await TemplateServices.all();
+                    expect(results.length).to.equal(3);
+                    let previousKey;
+                    results.forEach(result => {
+                        let currentKey = templateKey(result);
+                        if (previousKey) {
+                            if (currentKey < previousKey) {
+                                expect.fail(`key: Expected '${currentKey}' >= '${previousKey}'`);
+                            }
+                        }
+                        previousKey = currentKey;
+                    });
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
 
-                let results = await TemplateServices.all();
-                expect(results.length).to.equal(5);
+            });
+
+            it("should find all objects with includes", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[1].dataValues;
+                await loadTemplates(facilityMatch, templatesData0);
+
+                try {
+                    let results = await TemplateServices.all({
+                        withFacility: ""
+                    });
+                    expect(results.length).to.equal(3);
+                    results.forEach(result => {
+                        if (result.facility) {
+                            if (result.facilityId === facilityMatch.id) {
+                                expect(result.facility.id).to.equal(facilityMatch.id);
+                            }
+                        } else {
+                            expect.fail("Should have included facility");
+                        }
+                    });
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
+
+            it("should find some objects with pagination", async () => {
+
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[2].dataValues;
+                await loadTemplates(facilityMatch, templatesData1);
+
+                try {
+                    let results = await TemplateServices.all({
+                        offset: 1
+                    });
+                    expect(results.length).to.equal(2);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
 
             });
 
@@ -152,12 +145,13 @@ describe("TemplateServices Tests", () => {
 
             it("should fail on mismatched id", async () => {
 
-                let id = 9999;
+                let templateId = 9999;
+
                 try {
-                    await TemplateServices.find(id);
+                    await TemplateServices.find(templateId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    let expected = `id: Missing Template ${id}`;
+                    let expected = `templateId: Missing Template ${templateId}`;
                     expect(err.message).includes(expected);
                 }
 
@@ -165,249 +159,14 @@ describe("TemplateServices Tests", () => {
 
             it("should succeed on matched id", async () => {
 
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = { ...dataset.template1Full, facilityId: facility1.id };
-                let template1 = await Template.create(data1);
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[0].dataValues;
+                let templates = await loadTemplates(facilityMatch, templatesData0);
+                let templateMatch = templates[2].dataValues;
 
-                let result = await TemplateServices.find(template1.id);
-                expect(result.name).to.equal(data1.name);
-
-            });
-
-        });
-
-    });
-
-/*
-    describe("#findByFacilityId()", () => {
-
-        context("with two facilities and associated templates", () => {
-
-            it("should find only templates for specified facility", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Template.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let facility2 = await Facility.create(dataset.facility2full);
-                let data2 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data2.forEach(datum => {
-                    datum.facilityId = facility2.id;
-                })
-                await Template.bulkCreate(data2, {
-                    validate: true
-                });
-
-                let count = await Template.count({});
-                expect(count).to.equal(6);
-                let results = await TemplateServices.findByFacilityId
-                    (facility1.id);
-                expect(results.length).to.equal(3);
-
-            });
-
-        });
-
-    });
-*/
-
-/*
-    describe("#findByFacilityIdAndName()", () => {
-
-        context("with two facilities and associated templates", () => {
-
-            // SQLITE3 does not support iLike match condition
-            it.skip("should find only matching templates", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Template.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let facility2 = await Facility.create(dataset.facility2full);
-                let data2 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data2.forEach(datum => {
-                    datum.facilityId = facility2.id;
-                })
-                await Template.bulkCreate(data2, {
-                    validate: true
-                });
-
-                let count = await Template.count({});
-                expect(count).to.equal(6);
-                let results = await TemplateServices.findByFacilityIdAndName
-                    (facility1.id, "fewer");
-                expect(results.length).to.equal(2);
-
-            });
-
-        });
-
-    });
-*/
-
-/*
-    describe("#findByFacilityIdAndNameExact()", () => {
-
-        context("with two facilities and associated templates", () => {
-
-            it("should fail with incorrect name", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Template.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let count = await Template.count({});
-                expect(count).to.equal(3);
-                let incorrectName = "Incorrect Name";
                 try {
-                    await TemplateServices.findByFacilityIdAndNameExact
-                        (facility1.id, incorrectName);
-                    expect.fail("Should have thrown not found error");
-                } catch (err) {
-                    expect(err.message).includes
-                        (`name: Missing name '${incorrectName}'`);
-                }
-
-            });
-
-            it("should succeed with correct name", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Template.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let facility2 = await Facility.create(dataset.facility2full);
-                let data2 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data2.forEach(datum => {
-                    datum.facilityId = facility2.id;
-                })
-                await Template.bulkCreate(data2, {
-                    validate: true
-                });
-
-                let count = await Template.count({});
-                expect(count).to.equal(6);
-                try {
-                    let result = await TemplateServices.findByFacilityIdAndNameExact
-                    (facility1.id, dataset.template2Full.name);
-                    expect(result.facilityId).to.equal(facility1.id);
-                    expect(result.name).to.equal(dataset.template2Full.name);
-                } catch (err) {
-                    expect.fail(`Should not have thrown ${err.message}'`);
-                }
-
-            });
-
-        });
-
-    });
-*/
-
-    describe("#insert()", () => {
-
-        context("with duplicate name", () => {
-
-            it("should fail in same facility", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Template.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility1.id
-                };
-                try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes(`name: Name '${templateNew.name}' ` +
-                        "is already in use within this facility")
-                }
-
-            });
-
-            it("should succeed in different facility", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.template1Full,
-                    dataset.template2Full,
-                    dataset.template3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Template.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id
-                };
-                try {
-                    let result = await TemplateServices.insert(templateNew);
-                    expect(result.name).to.equal(templateNew.name);
+                    let result = await TemplateServices.find(templateMatch.id);
+                    expect(result.id).to.equal(templateMatch.id);
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);
                 }
@@ -416,178 +175,248 @@ describe("TemplateServices Tests", () => {
 
         });
 
-        context("with invalid arguments", () => {
+    });
 
-            it("should fail with empty name", async () => {
+    describe("#insert()", () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
+        context("invalid arguments", () => {
 
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    name: null
-                };
-                try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("template.name cannot be null");
+            it("should fail with duplicate name in same facility", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let templates = await loadTemplates(facilityMatch, templatesData0);
+                let invalidData = {
+                    ...templates[0].dataValues,
+                    name: templates[1].name
                 }
+                delete invalidData.id;
 
-            });
-
-            it("should fail with empty allMats", async () => {
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    allMats: null,
-                    facilityId: facility2.id,
-                };
                 try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
+                    await TemplateServices.insert(invalidData);
+                    expect.fail("Should have thrown BadRequest");
                 } catch (err) {
-                    expect(err.message).includes("template.allMats cannot be null");
-                }
-
-            });
-
-            it("should fail with empty facilityId", async () => {
-
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: null,
-                };
-                try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("template.facilityId cannot be null");
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`name: Name '${invalidData.name}' is already in use`);
                 }
 
             });
 
             it("should fail with invalid allMats", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let templateNew = {
-                    ...dataset.template2Full,
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0];
+                let invalidData = {
+                    ...templatesData0[0],
                     allMats: "3,2",
-                    facilityId: facility2.id,
-                };
+                    facilityId: facilityMatch.id,
+                }
+
                 try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
+                    await TemplateServices.insert(invalidData);
+                    expect.fail(`Should have thrown BadRequest`);
                 } catch (err) {
-                    expect(err.message).includes("is out of ascending order");
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`is out of ascending order`);
                 }
 
             });
 
             it("should fail with invalid facilityId", async () => {
 
-                let templateNew = {
-                    ...dataset.template2Full,
+                let invalidData = {
+                    ...templatesData0[1],
                     facilityId: 9999,
-                };
+                }
+
                 try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
+                    await TemplateServices.insert(invalidData);
+                    expect.fail(`Should have thrown BadRequest`);
                 } catch (err) {
-                    expect(err.message).includes(`facilityId: Missing Facility ${templateNew.facilityId}`);
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`facilityId: Missing Facility ${invalidData.facilityId}`);
                 }
 
             });
 
-            it("should fail with invalid handicapMats subset", async () => {
+            it("should fail with invalid handicapMats", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0];
+                let invalidData = {
+                    ...templatesData0[0],
+                    facilityId: facilityMatch.id,
+                    handicapMats: "3-99",
+                }
 
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    handicapMats: "99,101",
-                };
                 try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
+                    await TemplateServices.insert(invalidData);
+                    expect.fail(`Should have thrown BadRequest`);
                 } catch (err) {
-                    expect(err.message).includes("is not a subset");
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`handicapMats: is not a subset of all mats`);
                 }
 
             });
 
-            it("should fail with invalid handicapMats syntax", async () => {
+            it("should fail with invalid socketMats", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0];
+                let invalidData = {
+                    ...templatesData0[0],
+                    facilityId: facilityMatch.id,
+                    socketMats: "1,a,3",
+                }
 
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    handicapMats: "3,2",
-                };
                 try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
+                    await TemplateServices.insert(invalidData);
+                    expect.fail(`Should have thrown BadRequest`);
                 } catch (err) {
-                    expect(err.message).includes("is out of ascending order");
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`is not a number`);
                 }
 
             });
 
-            it("should fail with invalid socketMats subset", async () => {
+            it("should fail with missing allMats", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let invalidData = {
+                    ...templatesData0[1],
+                    facilityId: facilityMatch.id,
+                }
+                delete invalidData.allMats;
 
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    socketMats: "99,101",
-                };
                 try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
+                    await TemplateServices.insert(invalidData);
+                    expect.fail(`Should have thrown BadRequest`);
                 } catch (err) {
-                    expect(err.message).includes("is not a subset");
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`allMats: Is required`);
                 }
 
             });
 
-            it("should fail with invalid socketMats syntax", async () => {
+            it("should fail with missing facilityId", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
+                let invalidData = {
+                    ...templatesData0[1],
+                }
+                delete invalidData.facilityId;
 
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id,
-                    socketMats: "3,2",
-                };
                 try {
-                    await TemplateServices.insert(templateNew);
-                    expect.fail("Should have thrown validation error");
+                    await TemplateServices.insert(invalidData);
+                    expect.fail(`Should have thrown BadRequest`);
                 } catch (err) {
-                    expect(err.message).includes("is out of ascending order");
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`facilityId: Is required`);
+                }
+
+            });
+
+            it("should fail with missing name", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let invalidData = {
+                    ...templatesData0[1],
+                    facilityId: facilityMatch.id,
+                }
+                delete invalidData.name;
+
+                try {
+                    await TemplateServices.insert(invalidData);
+                    expect.fail(`Should have thrown BadRequest`);
+                } catch (err) {
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`name: Is required`);
                 }
 
             });
 
         });
 
-        context("with valid arguments", () => {
+        context("valid arguments", () => {
 
-            it("should succeed", async () => {
+            it("should succeed with duplicate name in different facility", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id
-                };
+                let facilities0 = await loadFacilities(facilitiesData0);
+                let facilityMatch0 = facilities0[0];
+                let templates0 = await loadTemplates(facilityMatch0, templatesData0);
+                let facilities1 = await loadFacilities(facilitiesData1);
+                let facilityMatch1 = facilities1[1];
+                let templates1 = await loadTemplates(facilityMatch1, templatesData1);
+                let validData = {
+                    ...templates0[0].dataValues,
+                    name: templates1[1].name
+                }
+
                 try {
-                    let result = await TemplateServices.insert(templateNew);
-                    expect(result.name).to.equal(templateNew.name);
+                    let result = await TemplateServices.insert(validData);
+                    expect(result.name).to.equal(validData.name);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
+
+            it("should succeed with full data", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let validData = {
+                    ...templatesData0[0],
+                    facilityId: facilityMatch.id
+                }
+
+                try {
+                    let result = await TemplateServices.insert(validData);
+                    expect(result.name).to.equal(validData.name);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
+
+            it("should succeed with minimum data", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let validData = {
+                    allMats: "2,4",
+                    facilityId: facilityMatch.id,
+                    name: "Brand New Template",
+                }
+
+                try {
+                    let result = await TemplateServices.insert(validData);
+                    expect(result.name).to.equal(validData.name);
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);
                 }
@@ -602,33 +431,34 @@ describe("TemplateServices Tests", () => {
 
         context("one object", () => {
 
-            it("should fail on mismatched id", async () => {
+            it("should fail on invalid templateId", async () => {
 
-                let id = 9999;
+                let invalidTemplateId = 9999;
+
                 try {
-                    await TemplateServices.remove(id);
+                    await TemplateServices.remove(invalidTemplateId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    expect(err.message).includes(`id: Missing Template ${id}`);
+                    expect(err.message).includes(`templateId: Missing Template ${invalidTemplateId}`);
                 }
 
             });
 
-            it("should succeed on matched id", async () => {
+            it("should succeed on valid templateId", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
-                let templateNew = {
-                    ...dataset.template2Full,
-                    facilityId: facility2.id
-                };
-                let template2 = await Template.create(templateNew);
-                let count = await Template.count({});
-                expect(count).to.equal(1);
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[1].dataValues;
+                let templates = await loadTemplates(facilityMatch, templatesData0);
+                let templateMatch = templates[1].dataValues;
 
-                let result = await TemplateServices.remove(template2.id);
-                expect(result.name).to.equal(templateNew.name);
-                count = await Template.count({});
-                expect(count).to.equal(0);
+                try {
+                    let result = await TemplateServices.remove(templateMatch.id);
+                    expect(result.name).to.equal(templateMatch.name);
+                    let results = await TemplateServices.all();
+                    expect(results.length).to.equal(2);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
 
             });
 
@@ -644,54 +474,51 @@ describe("TemplateServices Tests", () => {
 
             it("should fail with duplicate name", async () => {
 
-                let facility = await Facility.create(dataset.facility1full);
-                let data1 = {
-                    ...dataset.template1Full,
-                    facilityId: facility.id
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0].dataValues;
+                let templates = await loadTemplates(facilityMatch, templatesData1);
+                let templateMatch = templates[0].dataValues;
+                let templateDuplicate = templates[1].dataValues;
+                let invalidData = {
+                    ...templateMatch,
+                    name: templateDuplicate.name,
                 }
-                let template1 = await Template.create(data1);
-                let data2 = {
-                    ...dataset.template2Full,
-                    facilityId: facility.id
-                }
-                await Template.create(data2);
 
-                let data3 = {
-                    ...dataset.template1Full,
-                    facilityId: facility.id,
-                    name: data2.name
-                }
                 try {
-                    await TemplateServices.update(template1.id, data3);
-                    expect.fail("Should have thrown validation error");
+                    await TemplateServices.update(templateMatch.id, invalidData);
+                    expect.fail("Should have thrown BadRequest");
                 } catch (err) {
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
                     expect(err.message)
-                        .includes(`name: Name '${data2.name}' ` +
+                        .includes(`name: Name '${invalidData.name}' ` +
                                   "is already in use within this facility");
                 }
 
             });
 
-            it("should fail with invalid id", async () => {
+            it("should fail with invalid templateId", async () => {
 
-                let facility = await Facility.create(dataset.facility1full);
-                let data = {
-                    ...dataset.template1Full,
-                    facilityId: facility.id
-                }
-                await Template.create(data);
-
-                data = {
-                    ...dataset.template1Full,
-                    facilityId: facility.id
-                }
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0].dataValues;
+                let templates = await loadTemplates(facilityMatch, templatesData1);
+                let templateMatch = templates[0].dataValues;
                 let invalidId = 9999;
+                let invalidData = {
+                    ...templateMatch,
+                    id: invalidId
+                }
+
                 try {
-                    await TemplateServices.update(invalidId, data);
-                    expect.fail("Should have thrown not found error");
+                    await TemplateServices.update(invalidId, invalidData);
+                    expect.fail("Should have thrown NotFound");
                 } catch (err) {
+                    if (!(err instanceof NotFound)) {
+                        expect.fail(`Should have thrown typeof NotFond for '${err.message}`);
+                    }
                     expect(err.message)
-                        .includes(`id: Missing Template ${invalidId}`);
+                        .includes(`templateId: Missing Template ${invalidId}`);
                 }
 
             });
@@ -702,21 +529,15 @@ describe("TemplateServices Tests", () => {
 
             it("should succeed with no changes", async () => {
 
-                let facility = await Facility.create(dataset.facility1full);
-                let data = {
-                    ...dataset.template1Full,
-                    facilityId: facility.id
-                }
-                let template = await Template.create(data);
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0].dataValues;
+                let templates = await loadTemplates(facilityMatch, templatesData1);
+                let templateMatch = templates[0].dataValues;
 
-                data = {
-                    ...dataset.template1Full,
-                    facilityId: facility.id
-                }
                 try {
                     let result = await TemplateServices.update
-                    (template.id, data);
-                    expect(result.name).to.equal(data.name);
+                        (templateMatch.id, templateMatch);
+                    expect(result.name).to.equal(templateMatch.name);
                 } catch (err) {
                     expect.fail(`Should not have thrown ${err.message}`);
                 }
@@ -725,22 +546,19 @@ describe("TemplateServices Tests", () => {
 
             it("should succeed with unique name", async () => {
 
-                let facility = await Facility.create(dataset.facility1full);
-                let data = {
-                    ...dataset.template1Full,
-                    facilityId: facility.id
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0].dataValues;
+                let templates = await loadTemplates(facilityMatch, templatesData1);
+                let templateMatch = templates[0].dataValues;
+                let validData = {
+                    ...templateMatch,
+                    name: templateMatch.name + " Updated"
                 }
-                let template = await Template.create(data);
 
-                data = {
-                    ...dataset.template1Full,
-                    facilityId: facility.id,
-                    name: dataset.template1Full.name + " Updated"
-                }
                 try {
                     let result = await TemplateServices.update
-                    (template.id, data);
-                    expect(result.name).to.equal(data.name);
+                        (templateMatch.id, validData);
+                    expect(result.name).to.equal(validData.name);
                 } catch (err) {
                     expect.fail(`Should not have thrown ${err.message}`);
                 }

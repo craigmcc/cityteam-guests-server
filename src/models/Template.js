@@ -29,6 +29,9 @@ module.exports = (sequelize) => {
                     } catch (err) {
                         throw err;
                     }
+                },
+                notNull: {
+                    msg: "allMats: Is required"
                 }
             }
         },
@@ -45,15 +48,22 @@ module.exports = (sequelize) => {
             unique: "uniqueNameWithinFacility",
             validate: {
                 isValidFacilityId: function (value, next) {
-                    Facility.findByPk(value)
-                        .then(facility => {
-                            if (facility) {
-                                next();
-                            } else {
-                                next(`facilityId: Missing Facility ${value}`);
-                            }
-                        })
-                        .catch(next);
+                    if (value) {
+                        Facility.findByPk(value)
+                            .then(facility => {
+                                if (facility) {
+                                    next();
+                                } else {
+                                    next(`facilityId: Missing Facility ${value}`);
+                                }
+                            })
+                            .catch(next);
+                    } else {
+                        next("facilityId: Is required");
+                    }
+                },
+                notNull: {
+                    msg: "facilityId: Is required"
                 }
             }
         },
@@ -78,7 +88,12 @@ module.exports = (sequelize) => {
         name: {
             allowNull: false,
             type: DataTypes.STRING,
-            unique: "uniqueNameWithinFacility"
+            unique: "uniqueNameWithinFacility",
+            validate: {
+                notNull: {
+                    msg: "name: Is required"
+                }
+            }
         },
 
         socketMats: {

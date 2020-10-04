@@ -7,6 +7,7 @@ const Facility = db.Facility;
 const Guest = db.Guest;
 const Registration = db.Registration;
 const Template = db.Template;
+
 const BadRequest = require("../errors/BadRequest");
 const NotFound = require("../errors/NotFound");
 

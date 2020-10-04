@@ -161,6 +161,30 @@ module.exports.templatesData0 = [
     },
 ];
 
+module.exports.templatesData1 = [
+    {
+        allMats: "1-24",
+        comments: null,
+        handicapMats: "2,4,6",
+        name: "More Emergency Fewer Mats",
+        socketMats: "6-10,12",
+    },
+    {
+        allMats: "1-58",
+        comments: null,
+        handicapMats: "2,4,6",
+        name: "More Standard Mats",
+        socketMats: "6-10,12",
+    },
+    {
+        allMats: "1-12",
+        comments: null,
+        handicapMats: "2,4,6",
+        name: "More Extremely Fewer Mats",
+        socketMats: "6-10,12",
+    },
+];
+
 // Single Data Seeders -------------------------------------------------------
 
 // Returns array of created Facility objects
