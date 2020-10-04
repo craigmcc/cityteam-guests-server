@@ -25,7 +25,12 @@ module.exports = (sequelize) => {
 
         active: {
             allowNull: false,
-            type: DataTypes.BOOLEAN
+            type: DataTypes.BOOLEAN,
+            validate: {
+                notNull: {
+                    msg: "active: Is required"
+                }
+            }
         },
 
         address1: {
@@ -66,6 +71,9 @@ module.exports = (sequelize) => {
                                 : next();
                         })
                         .catch(next);
+                },
+                notNull: {
+                    msg: "name: Is required"
                 }
             }
         },

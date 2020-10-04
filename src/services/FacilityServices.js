@@ -124,7 +124,11 @@ exports.insert = async (data) => {
         if (transaction) {
             await transaction.rollback();
         }
-        throw err;
+        if (err instanceof db.Sequelize.ValidationError) {
+            throw new BadRequest(err.message);
+        } else {
+            throw err;
+        }
     }
 }
 
@@ -302,7 +306,7 @@ exports.templateAll = async (facilityId, queryParameters) => {
 }
 
 exports.templateExact = async (facilityId, name, queryParameters) => {
-    let facility = await Faclity.findByPk(facilityId);
+    let facility = await Facility.findByPk(facilityId);
     if (!facility) {
         throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
     }
