@@ -170,6 +170,7 @@ describe("GuestServices Tests", () => {
 
     });
 
+/*
     describe("#findByFacilityId()", () => {
 
         context("with two facilities and associated guests", () => {
@@ -213,7 +214,9 @@ describe("GuestServices Tests", () => {
         });
 
     });
+*/
 
+/*
     describe("#findByFacilityIdAndName()", () => {
 
         context("with two facilities and associated guests", () => {
@@ -258,7 +261,9 @@ describe("GuestServices Tests", () => {
         });
 
     });
+*/
 
+/*
     describe("#findByFacilityIdAndNameExact()", () => {
 
         context("with two facilities and associated guests", () => {
@@ -339,6 +344,7 @@ describe("GuestServices Tests", () => {
         });
 
     });
+*/
 
     describe("#insert()", () => {
 

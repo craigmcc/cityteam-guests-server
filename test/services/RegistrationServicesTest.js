@@ -468,6 +468,7 @@ describe("RegistrationServices Tests", () => {
 
     });
 
+/*
     describe("#findByFacilityIdAndRegistrationDate()", () => {
 
         context("with unused parameters", () => {
@@ -530,6 +531,7 @@ describe("RegistrationServices Tests", () => {
         });
 
     });
+*/
 
     describe("#findByGuestId()", () => {
 

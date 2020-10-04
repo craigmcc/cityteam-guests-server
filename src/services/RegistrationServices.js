@@ -295,6 +295,7 @@ exports.deassign = async (id) => {
     }
 }
 
+/*
 exports.findByFacilityIdAndRegistrationDate = async (facilityId, registrationDate) => {
 
     let conditions = {
@@ -315,6 +316,7 @@ exports.findByFacilityIdAndRegistrationDate = async (facilityId, registrationDat
     return await Registration.findAll(conditions);
 
 }
+*/
 
 exports.findByGuestId = async (guestId) => {
 

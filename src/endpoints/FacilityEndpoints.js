@@ -2,13 +2,8 @@
 
 // Internal Modules ----------------------------------------------------------
 
-const BadRequest = require("../errors/BadRequest");
-const NotFound = require("../errors/NotFound");
-const db = require("../models");
 const FacilityServices = require("../services/FacilityServices");
-const GuestServices = require("../services/GuestServices");
-const RegistrationServices = require("../services/RegistrationServices");
-const TemplateServices = require("../services/TemplateServices");
+const FormatErrorResponse = require("../util/FormatErrorResponse");
 
 // External Modules ----------------------------------------------------------
 
@@ -18,196 +13,207 @@ const router = require("express").Router();
 
 module.exports = (app) => {
 
-    // Model Specific Endpoints (no id) --------------------------------------
+    // Model Specific Endpoints (no facilityId) ------------------------------
 
-    // GET /active - Find all facilities that are active
+    // GET /active - Find active Facilities
     router.get("/active", async (req, res) => {
         try {
-            res.send(await FacilityServices.findByActive());
+            res.send(await FacilityServices.active
+                (req.query));
         } catch (err) {
-            console.error("FacilityEndpoints.findByActive error: ", err);
-            res.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.active()");
+            res.status(status).send(message);
         }
     })
 
-    // GET /name/:name - Find all facilities that match the specified name segment
+    // GET /exact/:name - Find Facility by exact name
+    router.get("/exact/:name", async (req, res) => {
+        try {
+            res.send(await FacilityServices.exact
+                (req.params.name, req.query));
+        } catch (err) {
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.exact()");
+            res.status(status).send(message);
+        }
+    })
+
+    // GET /name/:name - Find Facilities by name segment match
     router.get("/name/:name", async (req, res) => {
         try {
-            res.send(await FacilityServices.findByName(req.params.name));
+            res.send(await FacilityServices.name
+                (req.params.name, req.query));
         } catch (err) {
-            console.error("FacilityEndpoints.findByName error: ", err);
-            res.status(500).send(err.message);
-        }
-    })
-
-    // GET /nameExact/:name - Find the facility with this name (if any)
-    router.get("/nameExact/:name", async (req, res) => {
-        try {
-            res.send(await FacilityServices.findByNameExact(req.params.name));
-        } catch (err) {
-            if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.error("FacilityEndpoints.findByName error: ", err);
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.name()");
+            res.status(status).send(message);
         }
     })
 
     // Standard CRUD Endpoints -----------------------------------------------
 
-    // GET / - Find all models
+    // GET / - Find all Facilities
     router.get("/", async(req, res) => {
         try {
-            res.send(await FacilityServices.all());
+            res.send(await FacilityServices.all
+                (req.query));
         } catch (err) {
-            console.error("FacilityEndpoints.all error: ", err);
-            res.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.all()");
+            res.status(status).send(message);
         }
     });
 
-    // POST / - Insert a new model
+    // POST / - Insert a new Facility
     router.post("/", async (req, res) => {
         try {
-            res.send(await FacilityServices.insert(req.body));
+            res.send(await FacilityServices.insert
+                (req.body));
         } catch (err) {
-            if (err instanceof db.Sequelize.ValidationError) {
-                res.status(400).send(err.message);
-            } else {
-                console.error("FacilityEndpoints.insert error: ", err);
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.all()");
+            res.status(status).send(message);
         }
     })
 
-    // DELETE /:id - Delete model by id
-    router.delete("/:id", async (req, res) => {
+    // DELETE /:facilityId - Delete Facility by facilityId
+    router.delete("/:facilityId", async (req, res) => {
         try {
-            res.send(await FacilityServices.remove(req.params.id));
+            res.send(await FacilityServices.remove
+                (req.params.facilityId));
         } catch (err) {
-            if (err instanceof NotFound) {
-                console.status(404).send(err.message);
-            } else {
-                console.error("FacilityEndpoints.delete error: ", err);
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.all()");
+            res.status(status).send(message);
         }
     })
 
-    // GET /:id - Find model by id
-    router.get("/:id", async (req, res) => {
+    // GET /:facilityId - Find Facility by facilityId
+    router.get("/:facilityId", async (req, res) => {
         try {
-            res.send(await FacilityServices.find(req.params.id));
+            res.send(await FacilityServices.find
+                (req.params.facilityId, req.query));
         } catch (err) {
-            if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.log("FacilityEndpoints.find() error: ", err);
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.find()");
+            res.status(status).send(message);
         }
     });
 
-    // PUT /:id - Update model by id
-    router.put("/:id", async (req, res) => {
+    // PUT /:facilityId - Update Facility by facilityId
+    router.put("/:facilityId", async (req, res) => {
         try {
-            res.send(await FacilityServices.update(req.params.id, req.body));
+            res.send(await FacilityServices.update
+                (req.params.facilityId, req.body));
         } catch (err) {
-            if (err instanceof BadRequest) {
-                res.status(400).send(err.message);
-            } else if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.log("FacilityEndpoints.update() error: ", err);
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.update()");
+            res.status(status).send(message);
         }
     })
 
     // Model Specific Endpoints ----------------------------------------------
 
-    // GET /:id/guests - Find guests by id
-    router.get("/:id/guests", async (req, res) => {
+    // ***** Facility-Guest Relationships *****
+
+    // GET /:facilityId/guests - Find Guest objects by facilityId
+    router.get("/:facilityId/guests", async (req, res) => {
         try {
-            res.send(await GuestServices.findByFacilityId(req.params.id));
+            res.send(await FacilityServices.guestAll
+                (req.params.facilityId, req.query));
         } catch (err) {
-            console.error("FacilityEndpoints.findGuestsByFacilityId error: ", err);
-            res.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.guestAll()");
+            res.status(status).send(message);
         }
     });
 
-    // GET /:id/guests/name/:name - Find guests by id and name segment match
+    // GET /:facilityId/guests/exact/:firstName/:lastName - Find guests by facilityId and name
+    router.get("/:id/guests/exact/:firstName/:lastName", async (req, res) => {
+        try {
+            res.send(await FacilityServices.guestExact
+                (req.params.facilityId, req.params.firstName, req.params.lastName, req.query));
+        } catch (err) {
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.guestExact()");
+            res.status(status).send(message);
+        }
+    });
+
+    // GET /:facilityId/guests/name/:name - Find Guests by facilityId and name segment match
     router.get("/:id/guests/name/:name", async (req, res) => {
         try {
-            res.send(await GuestServices.findByFacilityIdAndName
-                (req.params.id, req.params.name));
+            res.send(await FacilityServices.guestName
+                (req.params.id, req.params.name, req.query));
         } catch (err) {
-            console.error("FacilityEndpoints.findGuestsByFacilityIdAndName error: ", err);
-            res.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.guestName()");
+            res.status(status).send(message);
         }
     });
 
-    // GET /:id/guests/nameExact/:firstName/:lastName - Find guests by id and name
-    router.get("/:id/guests/nameExact/:firstName/:lastName", async (req, res) => {
+    // ***** Facility-Registration Relationships *****
+
+    // GET /:facilityId/registrations - Find Registrations by facilityId
+    router.get("/:facilityId/registrations", async (req, res) => {
         try {
-            res.send(await GuestServices.findByFacilityIdAndNameExact
-                (req.params.id, req.params.firstName, req.params.lastName));
+            res.send(await FacilityServices.registrationAll
+                (req.params.facilityId, req.query));
         } catch (err) {
-            if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.error("FacilityEndpoints.findGuestsByFacilityIdAndNameExact error: ", err);
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.registrationAll()");
+            res.status(status).send(message);
         }
     });
 
-    // GET /:id/registrations/:registrationDate - Find registrations by id and date
-    router.get("/:id/registrations/:registrationDate", async (req, res) => {
+    // GET /:facilityId/registrations/:registrationDate - Find Registrations by facilityId and date
+    router.get("/:facilityId/registrations/:registrationDate", async (req, res) => {
         try {
-            res.send(await RegistrationServices.findByFacilityIdAndRegistrationDate
-                (req.params.id, req.params.registrationDate));
+            res.send(await FacilityServices.registrationDate
+                (req.params.facilityId, req.params.registrationDate, req.query));
         } catch (err) {
-            console.error("FacilityEndpoints.findRegistrationsByFacilityIdAndRegistrationDate error: ", err);
-            req.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.registrationDate()");
+            res.status(status).send(message);
         }
     });
 
-    // TODO - generate and remove registrations for a facility+date
+    // ***** Facility-Template Relationships *****
 
-    // GET /:id/templates - Find templates by id
-    router.get("/:id/templates", async (req, res) => {
+    // GET /:facilityId/templates - Find Templates by facilityId
+    router.get("/:facilityId/templates", async (req, res) => {
         try {
-            res.send(await TemplateServices.findByFacilityId(req.params.id));
+            res.send(await FacilityServices.templateAll
+                (req.params.facilityId, req.query));
         } catch (err) {
-            console.error("FacilityEndpoints.findTemplatesByFacilityId error: ", err);
-            res.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.templateAll()");
+            res.status(status).send(message);
         }
     });
 
-    // GET /:id/templates/name/:name - Find templates by id and name segment match
-    router.get("/:id/templates/name/:name", async (req, res) => {
+    // GET /:facilityId/templates/exact/:name - Find Templates by facilityId and name
+    router.get("/:facilityId/templates/name/:name", async (req, res) => {
         try {
-            res.send(await TemplateServices.findByFacilityIdAndName
-            (req.params.id, req.params.name));
+            res.send(await FacilityServices.templateExact
+                (req.params.facilityId, req.params.name, req.query));
         } catch (err) {
-            console.error("FacilityEndpoints.findTemplatesByFacilityIdAndName error: ", err);
-            res.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.templateExact()");
+            res.status(status).send(message);
         }
     });
 
-    // GET /:id/templates/nameExact/:name - Find templates by id and name
-    router.get("/:id/templates/nameExact/:name", async (req, res) => {
+    // GET /:facilityId/templates/name/:name - Find Templates by facilityId and name segment match
+    router.get("/:facilityId/templates/name/:name", async (req, res) => {
         try {
-            res.send(await TemplateServices.findByFacilityIdAndNameExact
-            (req.params.id, req.params.name));
+            res.send(await FacilityServices.templateName
+                (req.params.facilityId, req.params.name));
         } catch (err) {
-            if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.error("FacilityEndpoints.findTemplatesByFacilityIdAndNameExact error: ", err);
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityEndpoints.templateName()");
+            res.status(status).send(message);
         }
     });
 

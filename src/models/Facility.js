@@ -131,6 +131,7 @@ module.exports = (sequelize) => {
     // Facility Associations -------------------------------------------------
 
     Facility.associate = function (models) {
+
         models.Facility.hasMany(models.Guest);
 
         models.Facility.hasMany(models.Registration);

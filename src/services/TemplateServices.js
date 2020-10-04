@@ -108,6 +108,7 @@ exports.update = async (id, data) => {
 
 // Model Specific Methods ----------------------------------------------------
 
+/*
 exports.findByFacilityId = async (facilityId) => {
 
     let conditions = {
@@ -162,3 +163,4 @@ exports.findByFacilityIdAndNameExact = async (facilityId, name) => {
     }
 
 }
+*/

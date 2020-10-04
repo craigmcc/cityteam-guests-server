@@ -2,10 +2,14 @@
 
 // Internal Modules ----------------------------------------------------------
 
-const BadRequest = require("../errors/BadRequest");
-const NotFound = require("../errors/NotFound");
 const db = require("../models");
 const Facility = db.Facility;
+const Guest = db.Guest;
+const Registration = db.Registration;
+const Template = db.Template;
+const BadRequest = require("../errors/BadRequest");
+const NotFound = require("../errors/NotFound");
+
 const fields = [
     "active",
     "address1",
@@ -15,29 +19,92 @@ const fields = [
     "name",
     "phone",
     "state",
-    "zipCode"
+    "zipCode",
 ]
 const fieldsWithId = [...fields, "id"];
+
+const guestOrder = [
+    ["facilityId", "ASC"],
+    ["lastName", "ASC"],
+    ["firstName", "ASC"],
+];
+const facilityOrder = [
+    ["name", "ASC"],
+];
+const registrationOrder = [
+    ["facilityId", "ASC"],
+    ["registrationDate", "ASC"],
+    ["matNumber", "ASC"],
+];
+const templateOrder = [
+    ["facilityId", "ASC"],
+    ["name", "ASC"],
+];
 
 // External Modules ----------------------------------------------------------
 
 const Op = db.Sequelize.Op;
 
-// Model Specific Methods (no id) --------------------------------------------
+// Private Methods -----------------------------------------------------------
+
+let appendQueryParameters = (options, queryParameters) => {
+
+    if (!queryParameters) {
+        return options;
+    }
+
+    // Pagination parameters
+    if (queryParameters["limit"]) {
+        let value = parseInt(queryParameters.limit, 10);
+        if (isNaN(value)) {
+            throw new Error(`${queryParameters.limit} is not a number`);
+        } else {
+            options["limit"] = value;
+        }
+    }
+    if (queryParameters["offset"]) {
+        let value = parseInt(queryParameters.offset, 10);
+        if (isNaN(value)) {
+            throw new Error(`${queryParameters.offset} is not a number`);
+        } else {
+            options["offset"] = value;
+        }
+    }
+
+    // Inclusion parameters
+    let include = [];
+    if ("" === queryParameters["withGuests"]) {
+        include.push(Guest);
+    }
+    if ("" === queryParameters["withRegistrations"]) {
+        include.push(Registration);
+    }
+    if ("" === queryParameters["withTemplates"]) {
+        include.push(Template);
+    }
+    if (include.length > 0) {
+        options["include"] = include;
+    }
+
+    // Return result
+    return options;
+
+}
 
 // Standard CRUD Methods -----------------------------------------------------
 
-exports.all = async () => {
-    let conditions = {
-        order: [ ["name", "ASC"] ]
-    }
-    return await Facility.findAll(conditions);
+exports.all = async (queryParameters) => {
+    let options = appendQueryParameters({
+        order: facilityOrder
+    }, queryParameters);
+    return await Facility.findAll(options);
 }
 
-exports.find = async (id) => {
-    let result = await Facility.findByPk(id);
-    if (result === null) {
-        throw new NotFound(`id: Missing Facility ${id}`);
+exports.find = async (facilityId, queryParameters) => {
+    let options = appendQueryParameters({}, queryParameters);
+    let result = await Facility.findByPk(facilityId, options);
+    if (!result) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
     } else {
         return result;
     }
@@ -61,40 +128,40 @@ exports.insert = async (data) => {
     }
 }
 
-exports.remove = async (id) => {
-    let result = await Facility.findByPk(id);
+exports.remove = async (facilityId) => {
+    let result = await Facility.findByPk(facilityId);
     if (result == null) {
-        throw new NotFound(`id: Missing Facility ${id}`);
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
     }
     let num = await Facility.destroy({
-        where: { id: id }
+        where: { id: facilityId }
     });
     if (num !== 1) {
-        throw new NotFound(`id: Cannot remove Facility ${id}`);
+        throw new NotFound(`facilityId: Cannot remove Facility ${facilityId}`);
     }
     return result;
 }
 
-exports.update = async (id, data) => {
-    let original = await Facility.findByPk(id);
+exports.update = async (facilityId, data) => {
+    let original = await Facility.findByPk(facilityId);
     if (original === null) {
-        throw new NotFound(`id: Missing Facility ${id}`);
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
     }
     let transaction;
     try {
         transaction = await db.sequelize.transaction();
-        data.id = id;
+        data.id = facilityId;
         let result = await Facility.update(data, {
             fields: fieldsWithId,
             transaction: transaction,
-            where: { id: id }
+            where: { id: facilityId }
         });
         if (result[0] === 0) {
-            throw new Error("id: Update did not occur for id " + id);
+            throw new Error("facilityId: Cannot update Facility " + facilityId);
         }
         await transaction.commit();
         transaction = null;
-        return Facility.findByPk(id);
+        return Facility.findByPk(facilityId);
     } catch (err) {
         if (transaction) {
             await transaction.rollback();
@@ -110,33 +177,159 @@ exports.update = async (id, data) => {
 
 // Model Specific Methods ----------------------------------------------------
 
-exports.findByActive = async () => {
-    let conditions = {
-        order: [ ["name", "ASC"] ],
-        where: { active: true  }
-    }
-    return await Facility.findAll(conditions);
+// ***** Facility Lookups *****
+
+exports.active = async (queryParameters) => {
+    let options = appendQueryParameters({
+        order: facilityOrder,
+        where: { active: true }
+    }, queryParameters);
+    return await Facility.findAll(options);
 }
 
-exports.findByName = async (name) => {
-    let conditions = {
-        order: [ ["name", "ASC"] ],
+exports.exact = async (name, queryParameters) => {
+    let options = appendQueryParameters({
+        order: facilityOrder,
         where: {
-            name: { [Op.iLike]: `%${name}%` }
+            name: name,
         }
-    }
-    return await Facility.findAll(conditions);
-}
-
-exports.findByNameExact = async (name) => {
-    let conditions = {
-        order: [ ["name", "ASC"] ],
-        where: { name: name }
-    }
-    let results = await Facility.findAll(conditions);
+    }, queryParameters);
+    let results = await Facility.findAll(options);
     if (results.length > 0) {
         return results[0];
     } else {
-        throw new NotFound(`name: Missing name ${name}`)
+        throw new NotFound(`name: Missing Facility '${name}'`)
     }
 }
+
+exports.name = async (name, queryParameters) => {
+    let options = appendQueryParameters({
+        order: facilityOrder,
+        where: {
+            name: { [Op.iLike]: `%${name}%` }
+        }
+    }, queryParameters);
+    return await Facility.findAll(options);
+}
+
+// ***** Facility-Guest Relationships (One:Many) *****
+
+exports.guestAll = async (facilityId, queryParameters) => {
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: guestOrder,
+    }, queryParameters);
+    return await facility.getGuests(options);
+}
+
+exports.guestExact = async (facilityId, firstName, lastName, queryParameters) => {
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: guestOrder,
+        where: {
+            firstName: firstName,
+            lastName: lastName,
+        }
+    }, queryParameters);
+    let results = await facility.getGuests(options);
+    if (results.length !== 1) {
+        throw new NotFound(`name: Missing Guest '${firstName} ${lastName}'`);
+    }
+    return results[0];
+}
+
+exports.guestName = async (facilityId, name, queryParameters) => {
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: guestOrder,
+        where: {
+            [Op.or]: {
+                firstName: {[Op.iLike]: `%${name}%`},
+                lastName: {[Op.iLike]: `%${name}%`}
+            }
+        }
+    }, queryParameters);
+    return await facility.getGuests(options);
+}
+
+// ***** Facility-Registration Relationships (One:Many) *****
+
+exports.registrationAll = async (facilityId, queryParameters) => {
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: registrationOrder,
+    }, queryParameters);
+    return await facility.getRegistrations(options);
+}
+
+exports.registrationDate = async (facilityId, registrationDate, queryParameters) => {
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: registrationOrder,
+        where: {
+            registrationDate: registrationDate
+        }
+    }, queryParameters);
+    return await facility.getRegistrations(options);
+}
+
+// ***** Facility-Template Relationships (One:Many) *****
+
+exports.templateAll = async (facilityId, queryParameters) => {
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: templateOrder,
+    }, queryParameters);
+    return await facility.getTemplates(options);
+}
+
+exports.templateExact = async (facilityId, name, queryParameters) => {
+    let facility = await Faclity.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: templateOrder,
+        where: {
+            name: name,
+        }
+    }, queryParameters);
+    let results = await facility.getTemplates(options);
+    if (results.length !== 1) {
+        throw new NotFound(`name: Missing Template '${name}'`);
+    }
+    return results[0];
+}
+
+exports.templateName = async (facilityId, name, queryParameters) => {
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: templateOrder,
+        where: {
+            name: { [Op.iLike]: `%${name}%` }
+        }
+    }, queryParameters);
+    return await facility.getGuests(options);
+}
+

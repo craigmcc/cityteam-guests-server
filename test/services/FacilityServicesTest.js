@@ -118,12 +118,12 @@ describe("FacilityServices Tests", () => {
 
             it("should fail on mismatched id", async () => {
 
-                let id = 9999;
+                let facilityId = 9999;
                 try {
-                    await FacilityServices.find(id);
+                    await FacilityServices.find(facilityId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    let expected = `id: Missing Facility ${id}`;
+                    let expected = `facilityId: Missing Facility ${facilityId}`;
                     expect(err.message).includes(expected);
                 }
 
@@ -162,7 +162,7 @@ describe("FacilityServices Tests", () => {
                     validate: true
                 });
 
-                let results = await FacilityServices.findByActive();
+                let results = await FacilityServices.active();
                 expect(results.length).to.equal(3);
 
             });
@@ -186,7 +186,7 @@ describe("FacilityServices Tests", () => {
                     validate: true
                 });
 
-                let results = await FacilityServices.findByActive();
+                let results = await FacilityServices.active();
                 expect(results.length).to.equal(2);
 
             });
@@ -238,10 +238,10 @@ describe("FacilityServices Tests", () => {
 
                 let mismatchedName = "NOT PRESENT";
                 try {
-                    await FacilityServices.findByNameExact(mismatchedName);
+                    await FacilityServices.exact(mismatchedName);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    let expected = `name: Missing name ${mismatchedName}`;
+                    let expected = `name: Missing Facility '${mismatchedName}'`;
                     expect(err.message).includes(expected);
                 }
 
@@ -261,7 +261,7 @@ describe("FacilityServices Tests", () => {
                 let matchedName = data[1].name;
                 try {
                     let result =
-                        await FacilityServices.findByNameExact(matchedName);
+                        await FacilityServices.exact(matchedName);
                     expect(result.name).to.equal(matchedName);
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);
@@ -406,12 +406,12 @@ describe("FacilityServices Tests", () => {
 
             it("should fail on mismatched id", async () => {
 
-                let id = 9999;
+                let facilityId = 9999;
                 try {
-                    await FacilityServices.remove(id);
+                    await FacilityServices.remove(facilityId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    let expected = `id: Missing Facility ${id}`;
+                    let expected = `facilityId: Missing Facility ${facilityId}`;
                     expect(err.message).includes(expected);
                 }
 
@@ -466,7 +466,7 @@ describe("FacilityServices Tests", () => {
                     expect.fail("Should have thrown not found error");
                 } catch (err) {
                     expect(err.message)
-                        .includes(`id: Missing Facility ${invalidId}`);
+                        .includes(`facilityId: Missing Facility ${invalidId}`);
                 }
 
             });

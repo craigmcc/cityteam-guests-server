@@ -178,6 +178,7 @@ describe("TemplateServices Tests", () => {
 
     });
 
+/*
     describe("#findByFacilityId()", () => {
 
         context("with two facilities and associated templates", () => {
@@ -221,7 +222,9 @@ describe("TemplateServices Tests", () => {
         });
 
     });
+*/
 
+/*
     describe("#findByFacilityIdAndName()", () => {
 
         context("with two facilities and associated templates", () => {
@@ -266,7 +269,9 @@ describe("TemplateServices Tests", () => {
         });
 
     });
+*/
 
+/*
     describe("#findByFacilityIdAndNameExact()", () => {
 
         context("with two facilities and associated templates", () => {
@@ -344,6 +349,7 @@ describe("TemplateServices Tests", () => {
         });
 
     });
+*/
 
     describe("#insert()", () => {
 
