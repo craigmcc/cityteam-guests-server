@@ -211,7 +211,7 @@ describe("FacilityServices Tests", () => {
 
         context("one object", () => {
 
-            it("should fail on mismatched id", async () => {
+            it("should fail on invalid facilityId", async () => {
 
                 let facilityId = 9999;
 
@@ -219,13 +219,16 @@ describe("FacilityServices Tests", () => {
                     await FacilityServices.find(facilityId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
+                    if (!(err instanceof NotFound)) {
+                        expect.fail(`Should have thrown typeof NotFound for '${err.message}`);
+                    }
                     let expected = `facilityId: Missing Facility ${facilityId}`;
                     expect(err.message).includes(expected);
                 }
 
             });
 
-            it("should succeed on matched id", async () => {
+            it("should succeed on valid facilityId", async () => {
 
                 let facilities = await loadFacilities(facilitiesData0);
                 let facilityMatch = facilities[0];

@@ -18,11 +18,10 @@ module.exports = (app) => {
     // GET /active - Find active Facilities
     router.get("/active", async (req, res) => {
         try {
-            res.send(await FacilityServices.active
-                (req.query));
+            res.send(await FacilityServices.active(req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.active()");
+                FormatErrorResponse(err, "FacilityServices.active()");
             res.status(status).send(message);
         }
     })
@@ -30,11 +29,10 @@ module.exports = (app) => {
     // GET /exact/:name - Find Facility by exact name
     router.get("/exact/:name", async (req, res) => {
         try {
-            res.send(await FacilityServices.exact
-                (req.params.name, req.query));
+            res.send(await FacilityServices.exact(req.params.name, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.exact()");
+                FormatErrorResponse(err, "FacilityServices.exact()");
             res.status(status).send(message);
         }
     })
@@ -42,11 +40,10 @@ module.exports = (app) => {
     // GET /name/:name - Find Facilities by name segment match
     router.get("/name/:name", async (req, res) => {
         try {
-            res.send(await FacilityServices.name
-                (req.params.name, req.query));
+            res.send(await FacilityServices.name(req.params.name, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.name()");
+                FormatErrorResponse(err, "FacilityServices.name()");
             res.status(status).send(message);
         }
     })
@@ -56,11 +53,10 @@ module.exports = (app) => {
     // GET / - Find all Facilities
     router.get("/", async(req, res) => {
         try {
-            res.send(await FacilityServices.all
-                (req.query));
+            res.send(await FacilityServices.all(req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.all()");
+                FormatErrorResponse(err, "FacilityServices.all()");
             res.status(status).send(message);
         }
     });
@@ -68,11 +64,10 @@ module.exports = (app) => {
     // POST / - Insert a new Facility
     router.post("/", async (req, res) => {
         try {
-            res.send(await FacilityServices.insert
-                (req.body));
+            res.send(await FacilityServices.insert(req.body));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.all()");
+                FormatErrorResponse(err, "FacilityServices.insert()");
             res.status(status).send(message);
         }
     })
@@ -80,11 +75,10 @@ module.exports = (app) => {
     // DELETE /:facilityId - Delete Facility by facilityId
     router.delete("/:facilityId", async (req, res) => {
         try {
-            res.send(await FacilityServices.remove
-                (req.params.facilityId));
+            res.send(await FacilityServices.remove(req.params.facilityId));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.all()");
+                FormatErrorResponse(err, "FacilityServices.remove()");
             res.status(status).send(message);
         }
     })
@@ -92,11 +86,10 @@ module.exports = (app) => {
     // GET /:facilityId - Find Facility by facilityId
     router.get("/:facilityId", async (req, res) => {
         try {
-            res.send(await FacilityServices.find
-                (req.params.facilityId, req.query));
+            res.send(await FacilityServices.find(req.params.facilityId, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.find()");
+                FormatErrorResponse(err, "FacilityServices.find()");
             res.status(status).send(message);
         }
     });
@@ -104,11 +97,10 @@ module.exports = (app) => {
     // PUT /:facilityId - Update Facility by facilityId
     router.put("/:facilityId", async (req, res) => {
         try {
-            res.send(await FacilityServices.update
-                (req.params.facilityId, req.body));
+            res.send(await FacilityServices.update(req.params.facilityId, req.body));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.update()");
+                FormatErrorResponse(err, "FacilityServices.update()");
             res.status(status).send(message);
         }
     })
@@ -120,35 +112,34 @@ module.exports = (app) => {
     // GET /:facilityId/guests - Find Guest objects by facilityId
     router.get("/:facilityId/guests", async (req, res) => {
         try {
-            res.send(await FacilityServices.guestAll
-                (req.params.facilityId, req.query));
+            res.send(await FacilityServices.guestAll(req.params.facilityId, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.guestAll()");
+                FormatErrorResponse(err, "FacilityServices.guestAll()");
             res.status(status).send(message);
         }
     });
 
     // GET /:facilityId/guests/exact/:firstName/:lastName - Find guests by facilityId and name
-    router.get("/:id/guests/exact/:firstName/:lastName", async (req, res) => {
+    router.get("/:facilityId/guests/exact/:firstName/:lastName", async (req, res) => {
         try {
             res.send(await FacilityServices.guestExact
                 (req.params.facilityId, req.params.firstName, req.params.lastName, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.guestExact()");
+                FormatErrorResponse(err, "FacilityServices.guestExact()");
             res.status(status).send(message);
         }
     });
 
     // GET /:facilityId/guests/name/:name - Find Guests by facilityId and name segment match
-    router.get("/:id/guests/name/:name", async (req, res) => {
+    router.get("/:facilityId/guests/name/:name", async (req, res) => {
         try {
             res.send(await FacilityServices.guestName
-                (req.params.id, req.params.name, req.query));
+                (req.params.facilityId, req.params.name, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.guestName()");
+                FormatErrorResponse(err, "FacilityServices.guestName()");
             res.status(status).send(message);
         }
     });
@@ -162,7 +153,7 @@ module.exports = (app) => {
                 (req.params.facilityId, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.registrationAll()");
+                FormatErrorResponse(err, "FacilityServices.registrationAll()");
             res.status(status).send(message);
         }
     });
@@ -174,7 +165,7 @@ module.exports = (app) => {
                 (req.params.facilityId, req.params.registrationDate, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.registrationDate()");
+                FormatErrorResponse(err, "FacilityServices.registrationDate()");
             res.status(status).send(message);
         }
     });
@@ -184,11 +175,10 @@ module.exports = (app) => {
     // GET /:facilityId/templates - Find Templates by facilityId
     router.get("/:facilityId/templates", async (req, res) => {
         try {
-            res.send(await FacilityServices.templateAll
-                (req.params.facilityId, req.query));
+            res.send(await FacilityServices.templateAll(req.params.facilityId, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.templateAll()");
+                FormatErrorResponse(err, "FacilityServices.templateAll()");
             res.status(status).send(message);
         }
     });
@@ -200,7 +190,7 @@ module.exports = (app) => {
                 (req.params.facilityId, req.params.name, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.templateExact()");
+                FormatErrorResponse(err, "FacilityServices.templateExact()");
             res.status(status).send(message);
         }
     });
@@ -209,10 +199,10 @@ module.exports = (app) => {
     router.get("/:facilityId/templates/name/:name", async (req, res) => {
         try {
             res.send(await FacilityServices.templateName
-                (req.params.facilityId, req.params.name));
+                (req.params.facilityId, req.params.name, req.query));
         } catch (err) {
             let [status, message] =
-                FormatErrorResponse(err, "FacilityEndpoints.templateName()");
+                FormatErrorResponse(err, "FacilityServices.templateName()");
             res.status(status).send(message);
         }
     });

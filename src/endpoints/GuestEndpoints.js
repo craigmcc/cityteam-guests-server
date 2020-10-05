@@ -2,12 +2,9 @@
 
 // Internal Modules ----------------------------------------------------------
 
-const BadRequest = require("../errors/BadRequest");
-const NotFound = require("../errors/NotFound");
 const db = require("../models");
-const BanServices = require("../services/BanServices");
+const FormatErrorResponse = require("../util/FormatErrorResponse");
 const GuestServices = require("../services/GuestServices");
-const RegistrationServices = require("../services/RegistrationServices");
 
 // External Modules ----------------------------------------------------------
 
@@ -19,102 +16,60 @@ module.exports = (app) => {
 
     // Standard CRUD Endpoints -----------------------------------------------
 
-    // GET / - Find all models
+    // GET / - Find all Guests
     router.get("/", async(req, res) => {
         try {
-            res.send(await GuestServices.all());
+            res.send(await GuestServices.all(req.query));
         } catch (err) {
-            console.error("GuestEndpoints.all error: " +
-                JSON.stringify(err, null, 2));
-            res.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "GuestServices.all()");
+            res.status(status).send(message);
         }
     });
 
-    // POST / - Insert a new model
+    // POST / - Insert a new Guest
     router.post("/", async (req, res) => {
         try {
             res.send(await GuestServices.insert(req.body));
         } catch (err) {
-            if (err instanceof db.Sequelize.ValidationError) {
-                res.status(400).send(err.message);
-            } else {
-                console.error("GuestEndpoints.insert error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "GuestServices.insert()");
+            res.status(status).send(message);
         }
     })
 
-    // DELETE /:id - Delete model by id
-    router.delete("/:id", async (req, res) => {
+    // DELETE /:guestId - Delete Guest by guestId
+    router.delete("/:guestId", async (req, res) => {
         try {
-            res.send(await GuestServices.remove(req.params.id));
+            res.send(await GuestServices.remove(req.params.guestId));
         } catch (err) {
-            if (err instanceof NotFound) {
-                console.status(404).send(err.message);
-            } else {
-                console.error("GuestEndpoints.delete error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "GuestServices.remove()");
+            res.status(status).send(message);
         }
     })
 
-    // GET /:id - Find model by id
-    router.get("/:id", async (req, res) => {
+    // GET /:guestId - Find Guest by guestId
+    router.get("/:guestId", async (req, res) => {
         try {
-            res.send(await GuestServices.find(req.params.id));
+            res.send(await GuestServices.find(req.params.guestId, req.query));
         } catch (err) {
-            if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.log("GuestEndpoints.find() error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "GuestServices.find()");
+            res.status(status).send(message);
         }
     });
 
-    // PUT /:id - Update model by id
-    router.put("/:id", async (req, res) => {
+    // PUT /:guestId - Update Guest by guestId
+    router.put("/:guestId", async (req, res) => {
         try {
-            res.send(await GuestServices.update(req.params.id, req.body));
+            res.send(await GuestServices.update(req.params.guestId, req.body));
         } catch (err) {
-            if (err instanceof BadRequest) {
-                res.status(400).send(err.message);
-            } else if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.log("GuestEndpoints.update() error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "GuestServices.update()");
+            res.status(status).send(message);
         }
     })
-
-    // Model Specific Endpoints ----------------------------------------------
-
-    // GET /:id/bans - Find bans by id
-    router.get("/:id/bans", async (req, res) => {
-        try {
-            res.send(await BanServices.findByGuestId(req.params.id));
-        } catch (err) {
-            console.error("GuestEndpoints.findBansByGuestId error: " +
-                JSON.stringify(err, null, 2));
-            res.status(500).send(err.message);
-        }
-    });
-
-    // GET /:id/registrations - Find registrations by id
-    router.get("/:id/registrations", async (req, res) => {
-        try {
-            res.send(await RegistrationServices.findByGuestId(req.params.id));
-        } catch (err) {
-            console.error("GuestEndpoints.findRegistrationsByGuestId error: " +
-                JSON.stringify(err, null, 2));
-            res.status(500).send(err.message);
-        }
-    });
 
     // Export Routes ---------------------------------------------------------
 

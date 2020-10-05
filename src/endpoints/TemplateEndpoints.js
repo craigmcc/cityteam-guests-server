@@ -32,13 +32,9 @@ module.exports = (app) => {
         try {
             res.send(await TemplateServices.insert(req.body));
         } catch (err) {
-            if (err instanceof db.Sequelize.ValidationError) {
-                res.status(400).send(err.message);
-            } else {
-                console.error("TemplateServices.insert error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "TemplateServices.insert()");
+            res.status(status).send(message);
         }
     })
 
@@ -58,13 +54,9 @@ module.exports = (app) => {
         try {
             res.send(await TemplateServices.find(req.params.templateId, req.query));
         } catch (err) {
-            if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                let [status, message] =
-                    FormatErrorResponse(err, "TemplateServices.find()");
-                res.status(status).send(message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "TemplateServices.find()");
+            res.status(status).send(message);
         }
     });
 

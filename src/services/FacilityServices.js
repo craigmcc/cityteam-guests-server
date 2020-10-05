@@ -24,23 +24,9 @@ const fields = [
 ]
 const fieldsWithId = [...fields, "id"];
 
-const guestOrder = [
-    ["facilityId", "ASC"],
-    ["lastName", "ASC"],
-    ["firstName", "ASC"],
-];
-const facilityOrder = [
-    ["name", "ASC"],
-];
-const registrationOrder = [
-    ["facilityId", "ASC"],
-    ["registrationDate", "ASC"],
-    ["matNumber", "ASC"],
-];
-const templateOrder = [
-    ["facilityId", "ASC"],
-    ["name", "ASC"],
-];
+const {
+    facilityOrder, guestOrder, registrationOrder, templateOrder,
+} = require("../util/SortOrders");
 
 // External Modules ----------------------------------------------------------
 
@@ -58,7 +44,7 @@ let appendQueryParameters = (options, queryParameters) => {
     if (queryParameters["limit"]) {
         let value = parseInt(queryParameters.limit, 10);
         if (isNaN(value)) {
-            throw new Error(`${queryParameters.limit} is not a number`);
+            throw new Error(`limit: ${queryParameters.limit} is not a number`);
         } else {
             options["limit"] = value;
         }
@@ -66,7 +52,7 @@ let appendQueryParameters = (options, queryParameters) => {
     if (queryParameters["offset"]) {
         let value = parseInt(queryParameters.offset, 10);
         if (isNaN(value)) {
-            throw new Error(`${queryParameters.offset} is not a number`);
+            throw new Error(`offset: ${queryParameters.offset} is not a number`);
         } else {
             options["offset"] = value;
         }
@@ -138,7 +124,7 @@ exports.insert = async (data) => {
 
 exports.remove = async (facilityId) => {
     let result = await Facility.findByPk(facilityId);
-    if (result == null) {
+    if (!result) {
         throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
     }
     let num = await Facility.destroy({
@@ -152,7 +138,7 @@ exports.remove = async (facilityId) => {
 
 exports.update = async (facilityId, data) => {
     let original = await Facility.findByPk(facilityId);
-    if (original === null) {
+    if (!original) {
         throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
     }
     let transaction;

@@ -81,7 +81,7 @@ describe("TemplateServices Tests", () => {
 
             });
 
-            it("should find all objects with includes", async () => {
+            it("should find all objects with include", async () => {
 
                 let facilities = await loadFacilities(facilitiesData0);
                 let facilityMatch = facilities[1].dataValues;
@@ -143,7 +143,7 @@ describe("TemplateServices Tests", () => {
 
         context("one object", () => {
 
-            it("should fail on mismatched id", async () => {
+            it("should fail on invalid templateId", async () => {
 
                 let templateId = 9999;
 
@@ -151,13 +151,16 @@ describe("TemplateServices Tests", () => {
                     await TemplateServices.find(templateId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
+                    if (!(err instanceof NotFound)) {
+                        expect.fail(`Should have thrown typeof NotFound for '${err.message}`);
+                    }
                     let expected = `templateId: Missing Template ${templateId}`;
                     expect(err.message).includes(expected);
                 }
 
             });
 
-            it("should succeed on matched id", async () => {
+            it("should succeed on valid templateId", async () => {
 
                 let facilities = await loadFacilities(facilitiesData0);
                 let facilityMatch = facilities[0].dataValues;
@@ -439,6 +442,9 @@ describe("TemplateServices Tests", () => {
                     await TemplateServices.remove(invalidTemplateId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
+                    if (!(err instanceof NotFound)) {
+                        expect.fail(`Should have thrown typeof NotFound for '${err.message}`);
+                    }
                     expect(err.message).includes(`templateId: Missing Template ${invalidTemplateId}`);
                 }
 
@@ -515,7 +521,7 @@ describe("TemplateServices Tests", () => {
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
                     if (!(err instanceof NotFound)) {
-                        expect.fail(`Should have thrown typeof NotFond for '${err.message}`);
+                        expect.fail(`Should have thrown typeof NotFound for '${err.message}`);
                     }
                     expect(err.message)
                         .includes(`templateId: Missing Template ${invalidId}`);

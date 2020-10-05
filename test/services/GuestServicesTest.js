@@ -7,56 +7,22 @@ const Facility = db.Facility;
 const Guest = db.Guest;
 const GuestServices = require("../../src/services/GuestServices");
 
+const BadRequest = require("../../src/errors/BadRequest");
+const NotFound = require("../../src/errors/NotFound");
+
+const {
+    facilitiesData0, facilitiesData1, loadFacilities,
+    guestsData0, guestsData1, loadGuests,
+} = require("../util/SeedData");
+
+const {
+    guestKey,
+} = require("../util/SortKeys");
+
 // External Modules ----------------------------------------------------------
 
 const chai = require("chai");
 const expect = chai.expect;
-
-// Test Data -----------------------------------------------------------------
-
-// NOTE: Store each Facility then capture facilityId for subordinate objects
-const dataset = {
-
-    // Facility Data ---------------------------------------------------------
-
-    facility1full: {
-        active: true,
-        address1: 'First Address 1 Controller',
-        address2: 'First Address 2',
-        city: 'First City',
-        name: 'First Facility',
-        state: 'OR',
-        zipCode: '99999'
-    },
-
-    facility2full: {
-        active: true,
-        address1: 'Second Address 1 Controller',
-        address2: 'Second Address 2',
-        city: 'Second City',
-        name: 'Second Facility',
-        state: 'WA',
-        zipCode: '88888'
-    },
-
-    // Guest Data ---------------------------------------------------------
-
-    guest1Full: {
-        firstName: "Fred",
-        lastName: "Flintstone"
-    },
-    
-    guest2Full: {
-        firstName: "Barney",
-        lastName: "Rubble"
-    },
-    
-    guest3Full: {
-        firstName: "Bam Bam",
-        lastName: "Rubble"
-    },
-
-};
 
 // GuestServices Tests -------------------------------------------------------
 
@@ -92,33 +58,69 @@ describe("GuestServices Tests", () => {
 
             it("should find all objects", async () => {
 
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Guest.bulkCreate(data1, {
-                    validate: true
-                });
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                await loadGuests(facilityMatch, guestsData0);
 
-                let facility2 = await Facility.create(dataset.facility2full);
-                let data2 = [
-                    dataset.guest1Full,
-                    dataset.guest3Full
-                ];
-                data2.forEach(datum => {
-                    datum.facilityId = facility2.id;
-                })
-                await Guest.bulkCreate(data2, {
-                    validate: true
-                });
+                try {
+                    let results = await GuestServices.all();
+                    expect(results.length).to.equal(3);
+                    let previousKey;
+                    results.forEach(result => {
+                        let currentKey = guestKey(result);
+                        if (previousKey) {
+                            if (currentKey < previousKey) {
+                                expect.fail(`key: Expected '${currentKey}' >= '${previousKey}'`);
+                            }
+                        }
+                        previousKey = currentKey;
+                    });
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
 
-                let results = await GuestServices.all();
-                expect(results.length).to.equal(5);
+            });
+
+            it("should find all objects with include", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[1].dataValues;
+                await loadGuests(facilityMatch, guestsData0);
+
+                try {
+                    let results = await GuestServices.all({
+                        withFacility: ""
+                    });
+                    expect(results.length).to.equal(3);
+                    results.forEach(result => {
+                        if (result.facility) {
+                            if (result.facilityId === facilityMatch.id) {
+                                expect(result.facility.id).to.equal(facilityMatch.id);
+                            }
+                        } else {
+                            expect.fail("Should have included facility");
+                        }
+                    });
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
+
+            it("should find some objects with pagination", async () => {
+
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[2].dataValues;
+                await loadGuests(facilityMatch, guestsData1);
+
+                try {
+                    let results = await GuestServices.all({
+                        offset: 1
+                    });
+                    expect(results.length).to.equal(2);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
 
             });
 
@@ -141,202 +143,32 @@ describe("GuestServices Tests", () => {
 
         context("one object", () => {
 
-            it("should fail on mismatched id", async () => {
+            it("should fail on invalid guestId", async () => {
 
-                let id = 9999;
+                let guestId = 9999;
+
                 try {
-                    await GuestServices.find(id);
+                    await GuestServices.find(guestId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    let expected = `id: Missing Guest ${id}`;
+                    let expected = `guestId: Missing Guest ${guestId}`;
                     expect(err.message).includes(expected);
                 }
 
             });
 
-            it("should succeed on matched id", async () => {
+            it("should succeed on valid guestId", async () => {
 
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = { ...dataset.guest1Full, facilityId: facility1.id };
-                let guest1 = await Guest.create(data1);
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[2].dataValues;
+                let guests = await loadGuests(facilityMatch, guestsData1);
+                let guestMatch = guests[0].dataValues;
 
-                let result = await GuestServices.find(guest1.id);
-                expect(result.firstName).to.equal(data1.firstName);
-                expect(result.lastName).to.equal(data1.lastName);
-
-            });
-
-        });
-
-    });
-
-/*
-    describe("#findByFacilityId()", () => {
-
-        context("with two facilities and associated guests", () => {
-
-            it("should find only guests for specified facility", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Guest.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let facility2 = await Facility.create(dataset.facility2full);
-                let data2 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data2.forEach(datum => {
-                    datum.facilityId = facility2.id;
-                })
-                await Guest.bulkCreate(data2, {
-                    validate: true
-                });
-
-                let count = await Guest.count({});
-                expect(count).to.equal(6);
-                let results = await GuestServices.findByFacilityId
-                    (facility1.id);
-                expect(results.length).to.equal(3);
-
-            });
-
-        });
-
-    });
-*/
-
-/*
-    describe("#findByFacilityIdAndName()", () => {
-
-        context("with two facilities and associated guests", () => {
-
-            // SQLITE3 does not support iLike match condition
-            it.skip("should find only matching guests", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Guest.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let facility2 = await Facility.create(dataset.facility2full);
-                let data2 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data2.forEach(datum => {
-                    datum.facilityId = facility2.id;
-                })
-                await Guest.bulkCreate(data2, {
-                    validate: true
-                });
-
-                let count = await Guest.count({});
-                expect(count).to.equal(6);
-                let results = await GuestServices.findByFacilityIdAndName
-                    (facility1.id, "rub");
-                expect(results.length).to.equal(2);
-
-            });
-
-        });
-
-    });
-*/
-
-/*
-    describe("#findByFacilityIdAndNameExact()", () => {
-
-        context("with two facilities and associated guests", () => {
-
-            it("should fail with incorrect name", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Guest.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let count = await Guest.count({});
-                expect(count).to.equal(3);
-                let incorrectFirstName = "Incorrect First Name";
-                let incorrectLastName = "Incorrect Last Name";
                 try {
-                    await GuestServices.findByFacilityIdAndNameExact
-                        (facility1.id, incorrectFirstName, incorrectLastName);
-                    expect.fail("Should have thrown not found error");
-                } catch (err) {
-                    expect(err.message).includes
-                    (`name: Missing name '${incorrectFirstName} ${incorrectLastName}'`);
-                }
-
-            });
-
-            it("should succeed with correct name", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Guest.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let facility2 = await Facility.create(dataset.facility2full);
-                let data2 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data2.forEach(datum => {
-                    datum.facilityId = facility2.id;
-                })
-                await Guest.bulkCreate(data2, {
-                    validate: true
-                });
-
-                let count = await Guest.count({});
-                expect(count).to.equal(6);
-                try {
-                    let result = await GuestServices.findByFacilityIdAndNameExact
-                        (facility1.id, dataset.guest2Full.firstName,
-                            dataset.guest2Full.lastName);
-                    expect(result.facilityId).to.equal(facility1.id);
-                    expect(result.firstName).to.equal(dataset.guest2Full.firstName);
-                    expect(result.lastName).to.equal(dataset.guest2Full.lastName);
-                } catch (err) {
-                    expect.fail(`Should not have thrown ${err.message}'`);
+                    let result = await GuestServices.find(guestMatch.id);
+                    expect(result.firstName).to.equal(guestMatch.firstName);
+                    expect(result.lastName).to.equal(guestMatch.lastName);
+                } catch (rr) {
                 }
 
             });
@@ -344,138 +176,117 @@ describe("GuestServices Tests", () => {
         });
 
     });
-*/
 
     describe("#insert()", () => {
 
-        context("with duplicate name", () => {
+        context("invalid arguments", () => {
 
-            it("should fail in same facility", async () => {
+            it("should fail with duplicate name in same facility", async () => {
 
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Guest.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let guestNew = {
-                    ...dataset.guest2Full,
-                    facilityId: facility1.id
-                };
-                try {
-                    await GuestServices.insert(guestNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes(`name: Name '${guestNew.firstName} ${guestNew.lastName}' ` +
-                        "is already in use within this facility")
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let guests = await loadGuests(facilityMatch, guestsData0);
+                let invalidData = {
+                    ...guests[0].dataValues,
+                    firstName: guests[1].firstName,
+                    lastName: guests[1].lastName,
                 }
+                delete invalidData.id;
 
-            });
-
-            it("should succeed in different facility", async () => {
-
-                let facility1 = await Facility.create(dataset.facility1full);
-                let data1 = [
-                    dataset.guest1Full,
-                    dataset.guest2Full,
-                    dataset.guest3Full
-                ];
-                data1.forEach(datum => {
-                    datum.facilityId = facility1.id;
-                })
-                await Guest.bulkCreate(data1, {
-                    validate: true
-                });
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let guestNew = {
-                    ...dataset.guest2Full,
-                    facilityId: facility2.id
-                };
                 try {
-                    let result = await GuestServices.insert(guestNew);
-                    expect(result.firstName).to.equal(guestNew.firstName);
-                    expect(result.lastName).to.equal(guestNew.lastName);
+                    await GuestServices.insert(invalidData);
+                    expect.fail("Should have thrown BadRequest");
                 } catch (err) {
-                    expect.fail(`Should not have thrown '${err.message}'`);
-                }
-
-            });
-
-        });
-
-        context("with invalid arguments", () => {
-
-            it("should fail with empty firstName", async () => {
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let guestNew = {
-                    ...dataset.guest2Full,
-                    facilityId: facility2.id,
-                    firstName: null
-                };
-                try {
-                    await GuestServices.insert(guestNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("guest.firstName cannot be null");
-                }
-
-            });
-
-            it("should fail with empty lastName", async () => {
-
-                let facility2 = await Facility.create(dataset.facility2full);
-
-                let guestNew = {
-                    ...dataset.guest2Full,
-                    facilityId: facility2.id,
-                    lastName: null
-                };
-                try {
-                    await GuestServices.insert(guestNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("guest.lastName cannot be null");
-                }
-
-            });
-
-            it("should fail with empty facilityId", async () => {
-
-                let guestNew = {
-                    ...dataset.guest2Full,
-                    facilityId: null,
-                };
-                try {
-                    await GuestServices.insert(guestNew);
-                    expect.fail("Should have thrown validation error");
-                } catch (err) {
-                    expect(err.message).includes("guest.facilityId cannot be null");
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`name: Name '${invalidData.firstName} ${invalidData.lastName}' is already in use`);
                 }
 
             });
 
             it("should fail with invalid facilityId", async () => {
 
-                let guestNew = {
-                    ...dataset.guest2Full,
-                    facilityId: 9999,
-                };
+                let invalidData = {
+                    ...guestsData0[2],
+                    facilityId: 9999
+                }
+
                 try {
-                    await GuestServices.insert(guestNew);
-                    expect.fail("Should have thrown validation error");
+                    await GuestServices.insert(invalidData);
+                    expect.fail("Should have thrown BadRequest");
                 } catch (err) {
-                    expect(err.message).includes(`facilityId: Missing Facility ${guestNew.facilityId}`);
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message).includes(`facilityId: Missing Facility ${invalidData.facilityId}`);
+                }
+
+            });
+
+            it("should fail with missing facilityId", async () => {
+
+                let invalidData = {
+                    ...guestsData0[1]
+                }
+                delete invalidData.facilityId;
+
+                try {
+                    await GuestServices.insert(invalidData);
+                    expect.fail("Should have thrown BadRequest");
+                } catch (err) {
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`facilityId: Is required`);
+                }
+
+            });
+
+            it("should fail with missing firstName", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let invalidData = {
+                    ...guestsData0[1],
+                    facilityId: facilityMatch.id,
+                }
+                delete invalidData.firstName;
+
+                try {
+                    await GuestServices.insert(invalidData);
+                    expect.fail("Should have thrown BadRequest");
+                } catch (err) {
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`firstName: Is required`);
+                }
+
+            });
+
+            it("should fail with missing lastName", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let invalidData = {
+                    ...guestsData0[1],
+                    facilityId: facilityMatch.id,
+                }
+                delete invalidData.lastName;
+
+                try {
+                    await GuestServices.insert(invalidData);
+                    expect.fail("Should have thrown BadRequest");
+                } catch (err) {
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`lastName: Is required`);
                 }
 
             });
@@ -484,17 +295,63 @@ describe("GuestServices Tests", () => {
 
         context("with valid arguments", () => {
 
-            it("should succeed", async () => {
+            it("should succeed with duplicate name in different facility", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
-                let guestNew = {
-                    ...dataset.guest2Full,
-                    facilityId: facility2.id
-                };
+                let facilities0 = await loadFacilities(facilitiesData0);
+                let facilityMatch0 = facilities0[0];
+                let guests0 = await loadGuests(facilityMatch0, guestsData0);
+                let facilities1 = await loadFacilities(facilitiesData1);
+                let facilityMatch1 = facilities1[1];
+                let guests1 = await loadGuests(facilityMatch1, guestsData1);
+                let validData = {
+                    ...guests0[0].dataValues,
+                    firstName: guests1[1].firstName,
+                    lastName: guests1[1].lastName
+                }
+
                 try {
-                    let result = await GuestServices.insert(guestNew);
-                    expect(result.firstName).to.equal(guestNew.firstName);
-                    expect(result.lastName).to.equal(guestNew.lastName);
+                    let result = await GuestServices.insert(validData);
+                    expect(result.firstName).to.equal(validData.firstName);
+                    expect(result.lastName).to.equal(validData.lastName);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
+
+            it("should succeed with full data", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let validData = {
+                    ...guestsData0[0],
+                    facilityId: facilityMatch.id
+                }
+
+                try {
+                    let result = await GuestServices.insert(validData);
+                    expect(result.firstName).to.equal(validData.firstName);
+                    expect(result.lastName).to.equal(validData.lastName);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+            });
+
+            it("should succeed with minimal data", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2].dataValues;
+                let validData = {
+                    facilityId: facilityMatch.id,
+                    firstName: "New First Name",
+                    lastName: "New Last Name"
+                }
+
+                try {
+                    let result = await GuestServices.insert(validData);
+                    expect(result.firstName).to.equal(validData.firstName);
+                    expect(result.lastName).to.equal(validData.lastName);
                 } catch (err) {
                     expect.fail(`Should not have thrown '${err.message}'`);
                 }
@@ -509,34 +366,38 @@ describe("GuestServices Tests", () => {
 
         context("one object", () => {
 
-            it("should fail on mismatched id", async () => {
+            it("should fail on invalid guestId", async () => {
 
-                let id = 9999;
+                let guestId = 9999;
+
                 try {
-                    await GuestServices.remove(id);
+                    await GuestServices.remove(guestId);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    expect(err.message).includes(`id: Missing Guest ${id}`);
+                    if (!(err instanceof NotFound)) {
+                        expect.fail(`Should have thrown typeof NotFound for '${err.message}`);
+                    }
+                    expect(err.message).includes(`guestId: Missing Guest ${guestId}`);
                 }
 
             });
 
-            it("should succeed on matched id", async () => {
+            it("should succeed on valid guestId", async () => {
 
-                let facility2 = await Facility.create(dataset.facility2full);
-                let guestNew = {
-                    ...dataset.guest2Full,
-                    facilityId: facility2.id
-                };
-                let guest2 = await Guest.create(guestNew);
-                let count = await Guest.count({});
-                expect(count).to.equal(1);
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[1].dataValues;
+                let guests = await loadGuests(facilityMatch, guestsData0);
+                let guestMatch = guests[1].dataValues;
 
-                let result = await GuestServices.remove(guest2.id);
-                expect(result.firstName).to.equal(guestNew.firstName);
-                expect(result.lastName).to.equal(guestNew.lastName);
-                count = await Guest.count({});
-                expect(count).to.equal(0);
+                try {
+                    let result = await GuestServices.remove(guestMatch.id);
+                    expect(result.firstName).to.equal(guestMatch.firstName);
+                    expect(result.lastName).to.equal(guestMatch.lastName);
+                    let results = await GuestServices.all();
+                    expect(results.length).to.equal(2);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
 
             });
 
@@ -546,86 +407,79 @@ describe("GuestServices Tests", () => {
 
     describe("#update()", () => {
 
-        context("with invalid arguments", () => {
+        context("invalid arguments", () => {
 
             // NOTE: individual validation errors got checked in #insert tests
 
             it("should fail with duplicate name", async () => {
 
-                let facility = await Facility.create(dataset.facility1full);
-                let data1 = {
-                    ...dataset.guest1Full,
-                    facilityId: facility.id
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0].dataValues;
+                let guests = await loadGuests(facilityMatch, guestsData1);
+                let guestMatch = guests[0].dataValues;
+                let guestDuplicate = guests[1].dataValues;
+                let invalidData = {
+                    ...guestMatch,
+                    firstName: guestDuplicate.firstName,
+                    lastName: guestDuplicate.lastName
                 }
-                let guest1 = await Guest.create(data1);
-                let data2 = {
-                    ...dataset.guest2Full,
-                    facilityId: facility.id
-                }
-                await Guest.create(data2);
 
-                let data3 = {
-                    ...dataset.guest1Full,
-                    facilityId: facility.id,
-                    firstName: data2.firstName,
-                    lastName: data2.lastName
-                }
                 try {
-                    await GuestServices.update(guest1.id, data3);
-                    expect.fail("Should have thrown validation error");
+                    await GuestServices.update(guestMatch.id, invalidData);
+                    expect.fail("Should have thrown BadRequest");
                 } catch (err) {
+                    if (!(err instanceof BadRequest)) {
+                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}`);
+                    }
                     expect(err.message)
-                        .includes(`name: Name '${data2.firstName} ${data2.lastName}' ` +
+                        .includes(`name: Name '${invalidData.firstName} ${invalidData.lastName}' ` +
                             "is already in use within this facility");
                 }
 
             });
 
-            it("should fail with invalid id", async () => {
+            it("should fail with invalid guestId", async () => {
 
-                let facility = await Facility.create(dataset.facility1full);
-                let data = {
-                    ...dataset.guest1Full,
-                    facilityId: facility.id
-                }
-                await Guest.create(data);
-
-                data = {
-                    ...dataset.guest1Full,
-                    facilityId: facility.id
-                }
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0].dataValues;
+                let guests = await loadGuests(facilityMatch, guestsData1);
+                let guestMatch = guests[0].dataValues;
                 let invalidId = 9999;
-                try {
-                    await GuestServices.update(invalidId, data);
-                    expect.fail("Should have thrown not found error");
-                } catch (err) {
-                    expect(err.message)
-                        .includes(`id: Missing Guest ${invalidId}`);
+                let invalidData = {
+                    ...guestMatch,
+                    id: invalidId
                 }
+
+                try {
+                    await GuestServices.update(invalidId, invalidData);
+                    expect.fail("Should have thrown NotFound");
+                } catch (err) {
+                    if (!(err instanceof NotFound)) {
+                        expect.fail(`Should have thrown typeof NotFound for '${err.message}`);
+                    }
+                    expect(err.message)
+                        .includes(`guestId: Missing Guest ${invalidId}`);
+                }
+
 
             });
 
         });
 
-        context("with valid arguments", () => {
+        context("valid arguments", () => {
 
             it("should succeed with no changes", async () => {
 
-                let facility = await Facility.create(dataset.facility1full);
-                let data = {
-                    ...dataset.guest1Full,
-                    facilityId: facility.id
-                }
-                let guest = await Guest.create(data);
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0].dataValues;
+                let guests = await loadGuests(facilityMatch, guestsData1);
+                let guestMatch = guests[0].dataValues;
 
-                data = {
-                    ...dataset.guest1Full,
-                    facilityId: facility.id
-                }
                 try {
                     let result = await GuestServices.update
-                    (guest.id, data);
-                    expect(result.name).to.equal(data.name);
+                        (guestMatch.id, guestMatch);
+                    expect(result.firstName).to.equal(guestMatch.firstName);
+                    expect(result.lastName).to.equal(guestMatch.lastName);
                 } catch (err) {
                     expect.fail(`Should not have thrown ${err.message}`);
                 }
@@ -634,22 +488,20 @@ describe("GuestServices Tests", () => {
 
             it("should succeed with unique name", async () => {
 
-                let facility = await Facility.create(dataset.facility1full);
-                let data = {
-                    ...dataset.guest1Full,
-                    facilityId: facility.id
+                let facilities = await loadFacilities(facilitiesData1);
+                let facilityMatch = facilities[0].dataValues;
+                let guests = await loadGuests(facilityMatch, guestsData1);
+                let guestMatch = guests[0].dataValues;
+                let validData = {
+                    ...guestMatch,
+                    firstName: guestMatch.firstName + " Updated",
+                    lastName: guestMatch.lastName + " Updated"
                 }
-                let guest = await Guest.create(data);
 
-                data = {
-                    ...dataset.guest1Full,
-                    facilityId: facility.id,
-                    firstName: dataset.guest1Full.firstName + " Updated"
-                }
                 try {
                     let result = await GuestServices.update
-                       (guest.id, data);
-                    expect(result.name).to.equal(data.name);
+                            (guestMatch.id, validData);
+                    expect(result.firstName).to.equal(validData.firstName);
                 } catch (err) {
                     expect.fail(`Should not have thrown ${err.message}`);
                 }

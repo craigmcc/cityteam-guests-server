@@ -18,10 +18,10 @@ const fields = [
     "socketMats",
 ];
 const fieldsWithId = [...fields, "id"];
-const templateOrder = [
-    ["facilityId", "ASC"],
-    ["name", "ASC"],
-];
+
+const {
+    templateOrder,
+} = require("../util/SortOrders");
 
 // External Modules ----------------------------------------------------------
 
@@ -39,7 +39,7 @@ let appendQueryParameters = (options, queryParameters) => {
     if (queryParameters["limit"]) {
         let value = parseInt(queryParameters.limit, 10);
         if (isNaN(value)) {
-            throw new Error(`${queryParameters.limit} is not a number`);
+            throw new Error(`limit: ${queryParameters.limit} is not a number`);
         } else {
             options["limit"] = value;
         }
@@ -47,7 +47,7 @@ let appendQueryParameters = (options, queryParameters) => {
     if (queryParameters["offset"]) {
         let value = parseInt(queryParameters.offset, 10);
         if (isNaN(value)) {
-            throw new Error(`${queryParameters.offset} is not a number`);
+            throw new Error(`offset: ${queryParameters.offset} is not a number`);
         } else {
             options["offset"] = value;
         }
@@ -124,7 +124,7 @@ exports.remove = async (templateId) => {
 
 exports.update = async (templateId, data) => {
     let original = await Template.findByPk(templateId);
-    if (original === null) {
+    if (!original) {
         throw new NotFound(`templateId: Missing Template ${templateId}`);
     }
     let transaction;
@@ -136,7 +136,7 @@ exports.update = async (templateId, data) => {
             transaction: transaction,
             where: { id: templateId }
         });
-        if (result[0] === 0) {
+        if (result[0] !== 1) {
             throw new Error("templateId: Cannot update Template " + templateId);
         }
         await transaction.commit();

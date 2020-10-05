@@ -38,6 +38,9 @@ module.exports = (sequelize) => {
                             }
                         })
                         .catch(next);
+                },
+                notNull: {
+                    msg: "facilityId: Is required"
                 }
             }
         },
@@ -46,14 +49,24 @@ module.exports = (sequelize) => {
             allowNull: false,
             field: "firstname",
             type: DataTypes.STRING,
-            unique: "uniqueNameWithinFacility"
+            unique: "uniqueNameWithinFacility",
+            validate: {
+                notNull: {
+                    msg: "firstName: Is required"
+                }
+            }
         },
 
         lastName: {
             allowNull: false,
             field: "lastname",
             type: DataTypes.STRING,
-            unique: "uniqueNameWithinFacility"
+            unique: "uniqueNameWithinFacility",
+            validate: {
+                notNull: {
+                    msg: "lastName: Is required"
+                }
+            }
         },
 
 

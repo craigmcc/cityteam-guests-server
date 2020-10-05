@@ -2,9 +2,14 @@
 
 // Internal Modules ----------------------------------------------------------
 
+const db = require("../models");
+const Facility = db.Facility;
+const Guest = db.Guest;
+const Registration = db.Registration;
+
 const BadRequest = require("../errors/BadRequest");
 const NotFound = require("../errors/NotFound");
-const db = require("../models");
+
 const fields = [
     "comments",
     "facilityId",
@@ -12,29 +17,72 @@ const fields = [
     "lastName",
 ];
 const fieldsWithId = [...fields, "id"];
-const Guest = db.Guest;
+
+const {
+    guestOrder, registrationOrder,
+} = require("../util/SortOrders");
 
 // External Modules ----------------------------------------------------------
 
 const Op = db.Sequelize.Op;
 
-// Standard CRUD Methods -----------------------------------------------------
+// Private Methods -----------------------------------------------------------
 
-exports.all = async () => {
-    let conditions = {
-        order: [
-            ["facilityId", "ASC"],
-            ["lastName", "ASC"],
-            ["firstName", "ASC"]
-        ]
+let appendQueryParameters = (options, queryParameters) => {
+
+    if (!queryParameters) {
+        return options;
     }
-    return await Guest.findAll(conditions);
+
+    // Pagination parameters
+    if (queryParameters["limit"]) {
+        let value = parseInt(queryParameters.limit, 10);
+        if (isNaN(value)) {
+            throw new Error(`limit: ${queryParameters.limit} is not a number`);
+        } else {
+            options["limit"] = value;
+        }
+    }
+    if (queryParameters["offset"]) {
+        let value = parseInt(queryParameters.offset, 10);
+        if (isNaN(value)) {
+            throw new Error(`offset: ${queryParameters.offset} is not a number`);
+        } else {
+            options["offset"] = value;
+        }
+    }
+
+    // Inclusion parameters
+    let include = [];
+    if ("" === queryParameters["withFacility"]) {
+        include.push(Facility);
+    }
+    if ("" === queryParameters["withRegistrations"]) {
+        include.push(Registration);
+    }
+    if (include.length > 0) {
+        options["include"] = include;
+    }
+
+    // Return result
+    return options;
+
 }
 
-exports.find = async (id) => {
-    let result = await Guest.findByPk(id);
-    if (result === null) {
-        throw new NotFound(`id: Missing Guest ${id}`);
+// Standard CRUD Methods -----------------------------------------------------
+
+exports.all = async (queryParameters) => {
+    let options = appendQueryParameters({
+        order: guestOrder,
+    }, queryParameters);
+    return await Guest.findAll(options);
+}
+
+exports.find = async (guestId, queryParameters) => {
+    let options = appendQueryParameters({}, queryParameters);
+    let result = await Guest.findByPk(guestId, options);
+    if (!result) {
+        throw new NotFound(`guestId: Missing Guest ${guestId}`);
     } else {
         return result;
     }
@@ -54,44 +102,48 @@ exports.insert = async (data) => {
         if (transaction) {
             await transaction.rollback();
         }
-        throw err;
+        if (err instanceof db.Sequelize.ValidationError) {
+            throw new BadRequest(err.message);
+        } else {
+            throw err;
+        }
     }
 }
 
-exports.remove = async (id) => {
-    let result = await Guest.findByPk(id);
-    if (result == null) {
-        throw new NotFound(`id: Missing Guest ${id}`);
+exports.remove = async (guestId) => {
+    let result = await Guest.findByPk(guestId);
+    if (!result) {
+        throw new NotFound(`guestId: Missing Guest ${guestId}`);
     }
     let num = await Guest.destroy({
-        where: { id: id }
+        where: { id: guestId }
     });
     if (num !== 1) {
-        throw new NotFound(`id: Cannot remove Guest ${id}`);
+        throw new NotFound(`guestId: Cannot remove Guest ${guestId}`);
     }
     return result;
 }
 
-exports.update = async (id, data) => {
-    let original = await Guest.findByPk(id);
-    if (original === null) {
-        throw new NotFound(`id: Missing Guest ${id}`);
+exports.update = async (guestId, data) => {
+    let original = await Guest.findByPk(guestId);
+    if (!original) {
+        throw new NotFound(`guestId: Missing Guest ${guestId}`);
     }
     let transaction;
     try {
         transaction = await db.sequelize.transaction();
-        data.id = id;
+        data.id = guestId;
         let result = await Guest.update(data, {
             fields: fieldsWithId,
             transaction: transaction,
-            where: { id: id }
+            where: { id: guestId }
         });
-        if (result[0] === 0) {
-            throw new Error("id: Update did not occur for id " + id);
+        if (result[0] !== 1) {
+            throw new Error("guestId: Cannot update Guest " + guestId);
         }
         await transaction.commit();
         transaction = null;
-        return Guest.findByPk(id);
+        return Guest.findByPk(guestId);
     } catch (err) {
         if (transaction) {
             await transaction.rollback();
@@ -104,69 +156,3 @@ exports.update = async (id, data) => {
     }
 
 }
-
-// Model Specific Methods ----------------------------------------------------
-
-/*
-exports.findByFacilityId = async (facilityId) => {
-
-    let conditions = {
-        order: [
-            ["facilityId", "ASC"],
-            ["lastName", "ASC"],
-            ["firstName", "ASC"]
-        ],
-        where: {
-            facilityId: facilityId,
-        }
-    }
-
-    return await Guest.findAll(conditions);
-
-}
-
-exports.findByFacilityIdAndName = async (facilityId, name) => {
-
-    let conditions = {
-        order: [
-            ["facilityId", "ASC"],
-            ["lastName", "ASC"],
-            ["firstName", "ASC"]
-        ],
-        where: {
-            facilityId: facilityId,
-            [Op.or]: {
-                firstName: {[Op.iLike]: `%${name}%`},
-                lastName: {[Op.iLike]: `%${name}%`}
-            }
-        }
-    }
-
-    return await Guest.findAll(conditions);
-
-}
-
-exports.findByFacilityIdAndNameExact = async (facilityId, firstName, lastName) => {
-
-    let conditions = {
-        order: [
-            ["facilityId", "ASC"],
-            ["lastName", "ASC"],
-            ["firstName", "ASC"]
-        ],
-        where: {
-            facilityId: facilityId,
-            lastName: lastName,
-            firstName: firstName
-        }
-    }
-
-    let results = await Guest.findAll(conditions);
-    if (results.length > 0) {
-        return results[0];
-    } else {
-        throw new NotFound(`name: Missing name '${firstName} ${lastName}'`);
-    }
-
-}
-*/
