@@ -74,6 +74,9 @@ let appendQueryParameters = (options, queryParameters) => {
 
     // Inclusion parameters
     let include = [];
+    if ("" === queryParameters["withGuest"]) {
+        include.push(Guest); // for registrationDate() only
+    }
     if ("" === queryParameters["withGuests"]) {
         include.push(Guest);
     }
