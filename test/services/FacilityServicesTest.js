@@ -335,27 +335,6 @@ describe("FacilityServices Tests", () => {
 
             });
 
-            it("should fail with missing active", async () => {
-
-                let facilities = await loadFacilities(facilitiesData1);
-                let invalidData = {
-                    ...facilities[0].dataValues
-                }
-                delete invalidData.active;
-
-                try {
-                    await FacilityServices.insert(invalidData);
-                    expect.fail("Should have thrown BadRequest");
-                } catch (err) {
-                    if (!(err instanceof BadRequest)) {
-                        expect.fail(`Should have thrown typeof BadRequest for '${err.message}'`);
-                    }
-                    expect(err.message)
-                        .includes("active: Is required");
-                }
-
-            });
-
             it("should fail with missing name", async () => {
 
                 let facilities = await loadFacilities(facilitiesData1);

@@ -110,9 +110,7 @@ module.exports = (app) => {
             )
 
         } catch (err) {
-            console.error("DevModeEndpoints.import error: " +
-                JSON.stringify(err, null, 2));
-            res.status(500).send(err.message);
+            console.error("DevModeEndpoints.import error: ", err);            res.status(500).send(err.message);
         }
 
     })
@@ -122,8 +120,7 @@ module.exports = (app) => {
         try {
             res.send(await DevModeServices.reload());
         } catch (err) {
-            console.error("DevModeEndpoints.reload error: " +
-                JSON.stringify(err, null, 2));
+            console.error("DevModeEndpoints.reload error: ", err);
             res.status(500).send(err.message);
         }
     })
@@ -141,7 +138,7 @@ let acquireFacility = async () => {
 
     let facility = {};
     try {
-        facility = await FacilityServices.findByNameExact("Portland");
+        facility = await FacilityServices.exact("Portland");
     } catch (err) {
         facility = await FacilityServices.insert({
             active: true,

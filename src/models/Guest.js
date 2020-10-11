@@ -17,6 +17,17 @@ module.exports = (sequelize) => {
 
     Guest.init({
 
+        active: {
+            allowNull: false,
+            defaultValue: true,
+            type: DataTypes.BOOLEAN,
+            validate: {
+                notNull: {
+                    msg: "active: Is required"
+                }
+            }
+        },
+
         comments: {
             allowNull: true,
             type: DataTypes.STRING,

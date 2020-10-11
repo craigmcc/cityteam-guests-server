@@ -18,6 +18,17 @@ module.exports = (sequelize) => {
 
     Template.init({
 
+        active: {
+            allowNull: false,
+            defaultValue: true,
+            type: DataTypes.BOOLEAN,
+            validate: {
+                notNull: {
+                    msg: "active: Is required"
+                }
+            }
+        },
+
         allMats: {
             allowNull: false,
             field: "allmats",

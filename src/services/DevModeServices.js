@@ -118,7 +118,7 @@ exports.imported = async (facility, imported) => {
         (imported.lastName && (imported.lastName.length > 0)) &&
         (!fatalError)) {
         try {
-            guest = await GuestServices.findByFacilityIdAndNameExact
+            guest = await FacilityServices.guestExact
                 (facility.id,
                  capitalize(imported.firstName),
                  capitalize(imported.lastName))
@@ -547,8 +547,8 @@ let capitalize = (input) => {
 }
 
 let loadBans = async (facilityName, firstName, lastName, banData) => {
-    let facility = await FacilityServices.findByNameExact(facilityName);
-    let guest = await GuestServices.findByFacilityIdAndNameExact
+    let facility = await FacilityServices.exact(facilityName);
+    let guest = await FacilityServices.guestExact
         (facility.id, firstName, lastName);
     for (const ban of banData) {
         ban.guestId = guest.id;
@@ -563,7 +563,7 @@ let loadFacilities = async (facilityData) => {
 }
 
 let loadGuests = async (facilityName, guestData) => {
-    let facility = await FacilityServices.findByNameExact(facilityName);
+    let facility = await FacilityServices.exact(facilityName);
     for (const guest of guestData) {
         guest.facilityId = facility.id;
         await GuestServices.insert(guest);
@@ -571,8 +571,8 @@ let loadGuests = async (facilityName, guestData) => {
 }
 
 let loadRegistrationsAssigned = async (facilityName, firstName, lastName, matNumber, registrationData) => {
-    let facility = await FacilityServices.findByNameExact(facilityName);
-    let guest = await GuestServices.findByFacilityIdAndNameExact(facility.id, firstName, lastName);
+    let facility = await FacilityServices.exact(facilityName);
+    let guest = await FacilityServices.guestExact(facility.id, firstName, lastName);
     for (const registration of registrationData) {
         registration.comments = `${facility.name} registration for ${firstName} ${lastName}`;
         registration.facilityId = facility.id;
@@ -583,7 +583,7 @@ let loadRegistrationsAssigned = async (facilityName, firstName, lastName, matNum
 }
 
 let loadRegistrationsUnassigned = async (facilityName, registrationData) => {
-    let facility = await FacilityServices.findByNameExact(facilityName);
+    let facility = await FacilityServices.exact(facilityName);
     for (const registration of registrationData) {
         registration.facilityId = facility.id;
         await RegistrationServices.insert(registration);
@@ -591,7 +591,7 @@ let loadRegistrationsUnassigned = async (facilityName, registrationData) => {
 }
 
 let loadTemplates = async (facilityName, templateData) => {
-    let facility = await FacilityServices.findByNameExact(facilityName);
+    let facility = await FacilityServices.exact(facilityName);
     for (const template of templateData) {
         template.facilityId = facility.id;
         await TemplateServices.insert(template);
