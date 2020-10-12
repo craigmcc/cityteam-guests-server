@@ -71,6 +71,21 @@ module.exports = (app) => {
         }
     })
 
+    // Model Specific Endpoints ----------------------------------------------
+
+    // ***** Guest-Registration Relationships *****
+
+    // GET /:guestId/registrations - Find Registration objects by guestId
+    router.get("/:guestId/registrations", async (req, res) => {
+        try {
+            res.send(await GuestServices.registrationAll(req.params.guestId, req.query));
+        } catch (err) {
+            let [status, message] =
+                FormatErrorResponse(err, "GuestServices.registrationAll()");
+            res.status(status).send(message);
+        }
+    });
+
     // Export Routes ---------------------------------------------------------
 
     app.use("/api/guests", router);

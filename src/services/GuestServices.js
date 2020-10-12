@@ -154,5 +154,19 @@ exports.update = async (guestId, data) => {
             throw err;
         }
     }
+}
 
+// Model Specific Methods ----------------------------------------------------
+
+// ***** Registration Lookups *****
+
+exports.registrationAll = async (guestId, queryParameters) => {
+    let guest = await Guest.findByPk(guestId);
+    if (!guest) {
+        throw new NotFound(`guestId: Missing Guest ${guestId}`);
+    }
+    let options = appendQueryParameters({
+        order: registrationOrder,
+    }, queryParameters);
+    return await guest.getRegistrations(options);
 }

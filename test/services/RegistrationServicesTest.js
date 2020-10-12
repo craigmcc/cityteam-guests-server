@@ -446,7 +446,7 @@ describe("RegistrationServices Tests", () => {
                     await RegistrationServices.find(id);
                     expect.fail("Should have thrown NotFound");
                 } catch (err) {
-                    let expected = `id: Missing Registration ${id}`;
+                    let expected = `registrationId: Missing Registration ${id}`;
                     expect(err.message).includes(expected);
                 }
 
@@ -463,93 +463,6 @@ describe("RegistrationServices Tests", () => {
                 }
 
             });
-
-        });
-
-    });
-
-/*
-    describe("#findByFacilityIdAndRegistrationDate()", () => {
-
-        context("with unused parameters", () => {
-
-            it("should find nothing with unused facilityId", async () => {
-
-                let facilityId = 9999;
-                let registrationDate = "2020-07-04";
-
-                try {
-                    let results =
-                        await RegistrationServices
-                            .findByFacilityIdAndRegistrationDate
-                            (facilityId, registrationDate);
-                    expect(results.length).to.equal(0);
-                } catch (err) {
-                    expect.fail(`Should not have thrown '${err.message}'`);
-                }
-
-            });
-
-            it("should find nothing with unused registrationDate", async () => {
-
-                let facilityId = facility1.id;
-                let registrationDate = "2020-10-31";
-
-                try {
-                    let results =
-                        await RegistrationServices
-                            .findByFacilityIdAndRegistrationDate
-                            (facilityId, registrationDate);
-                    expect(results.length).to.equal(0);
-                } catch (err) {
-                    expect.fail(`Should not have thrown '${err.message}'`);
-                }
-
-            });
-
-        });
-
-        context("with used parameters", () => {
-
-            it("should find data with used parameters", async () => {
-
-                let facilityId = facility1.id;
-                let registrationDate = "2020-07-04";
-
-                try {
-                    let results =
-                        await RegistrationServices
-                            .findByFacilityIdAndRegistrationDate
-                            (facilityId, registrationDate);
-                    expect(results.length).to.equal(4);
-                } catch (err) {
-                    expect.fail(`Should not have thrown '${err.message}'`);
-                }
-
-            });
-
-        });
-
-    });
-*/
-
-    describe("#findByGuestId()", () => {
-
-        context("with seed data", () => {
-
-            it("should find data across days", async () => {
-
-                let guestId = guest1_2.id;
-
-                try {
-                    let results = await RegistrationServices
-                        .findByGuestId(guestId);
-                    expect(results.length).to.equal(2);
-                } catch (err) {
-                    expect.fail(`Should not have thrown '${err.message}'`);
-                }
-
-            })
 
         });
 

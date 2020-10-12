@@ -6,6 +6,7 @@ const db = require ("../../src/models");
 const Facility = db.Facility;
 const Guest = db.Guest;
 const GuestServices = require("../../src/services/GuestServices");
+const RegistrationServices = require("../../src/services/RegistrationServices");
 
 const BadRequest = require("../../src/errors/BadRequest");
 const NotFound = require("../../src/errors/NotFound");
@@ -13,6 +14,7 @@ const NotFound = require("../../src/errors/NotFound");
 const {
     facilitiesData0, facilitiesData1, loadFacilities,
     guestsData0, guestsData1, loadGuests,
+    registrationsData0, registrationsData1, loadRegistrations,
 } = require("../util/SeedData");
 
 const {
@@ -357,6 +359,42 @@ describe("GuestServices Tests", () => {
                 }
 
             });
+
+        });
+
+    });
+
+    describe("#registrationAll()", () => {
+
+        context("with seed data", () => {
+
+            it("should find data across days", async () => {
+
+                let facilities = await loadFacilities(facilitiesData0);
+                let facilityMatch = facilities[2];
+                let guests = await loadGuests(facilityMatch, guestsData0);
+                let guestMatch = guests[1];
+                let registrations0 = await loadRegistrations(facilityMatch, registrationsData0);
+                let registrationMatch0 = registrations0[0];
+                let registrations1 = await loadRegistrations(facilityMatch, registrationsData1);
+                let registrationMatch1 = registrations1[1];
+
+                let assign = {
+                    guestId: guestMatch.id
+                }
+                let assigned0 = await RegistrationServices.assign(registrationMatch0.id, assign);
+                let assigned1 = await RegistrationServices.assign(registrationMatch1.id, assign);
+
+                try {
+                    let results =
+                        await GuestServices.registrationAll(guestMatch.id);
+                    expect(results.length).to.equal(2);
+                } catch (err) {
+                    expect.fail(`Should not have thrown '${err.message}'`);
+                }
+
+
+            })
 
         });
 

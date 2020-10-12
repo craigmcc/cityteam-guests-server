@@ -2,9 +2,8 @@
 
 // Internal Modules ----------------------------------------------------------
 
-const BadRequest = require("../errors/BadRequest");
-const NotFound = require("../errors/NotFound");
 const db = require("../models");
+const FormatErrorResponse = require("../util/FormatErrorResponse");
 const RegistrationServices = require("../services/RegistrationServices");
 
 // External Modules ----------------------------------------------------------
@@ -20,11 +19,11 @@ module.exports = (app) => {
     // GET / - Find all models
     router.get("/", async(req, res) => {
         try {
-            res.send(await RegistrationServices.all());
+            res.send(await RegistrationServices.all(req.query));
         } catch (err) {
-            console.error("RegistrationEndpoints.all error: " +
-                JSON.stringify(err, null, 2));
-            res.status(500).send(err.message);
+            let [status, message] =
+                FormatErrorResponse(err, "RegistrationServices.all()");
+            res.status(status).send(message);
         }
     });
 
@@ -33,100 +32,83 @@ module.exports = (app) => {
         try {
             res.send(await RegistrationServices.insert(req.body));
         } catch (err) {
-            if (err instanceof db.Sequelize.ValidationError) {
-                res.status(400).send(err.message);
-            } else {
-                console.error("RegistrationEndpoints.insert error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "RegistrationServices.insert()");
+            res.status(status).send(message);
         }
     })
 
-    // DELETE /:id - Delete model by id
-    router.delete("/:id", async (req, res) => {
+    // DELETE /:registrationId - Delete Registration by registrationId
+    router.delete("/:registrationId", async (req, res) => {
         try {
-            res.send(await RegistrationServices.remove(req.params.id));
+            res.send(await RegistrationServices.remove(req.params.registrationId));
         } catch (err) {
-            if (err instanceof NotFound) {
-                console.status(404).send(err.message);
-            } else {
-                console.error("RegistrationEndpoints.delete error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "RegistrationServices.remove()");
+            res.status(status).send(message);
         }
     })
 
-    // GET /:id - Find model by id
-    router.get("/:id", async (req, res) => {
+    // GET /:registrationId - Find Registration by registrationId
+    router.get("/:registrationId", async (req, res) => {
         try {
-            res.send(await RegistrationServices.find(req.params.id));
+            res.send(await RegistrationServices.find(req.params.registrationId, req.query));
         } catch (err) {
-            if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.log("RegistrationEndpoints.find() error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "RegistrationServices.find()");
+            res.status(status).send(message);
         }
     });
 
-    // PUT /:id - Update model by id
-    router.put("/:id", async (req, res) => {
+    // PUT /:registrationId - Update Registration by registrationId
+    router.put("/:registrationId", async (req, res) => {
         // TODO - disallow assigned updates this way?
         try {
-            res.send(await RegistrationServices.update(req.params.id, req.body));
+            res.send(await RegistrationServices.update(req.params.registrationId, req.body));
         } catch (err) {
-            if (err instanceof BadRequest) {
-                res.status(400).send(err.message);
-            } else if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.log("RegistrationEndpoints.update() error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "RegistrationServices.update()");
+            res.status(status).send(message);
         }
     })
 
     // Model Specific Endpoints ----------------------------------------------
 
-    // POST /:id/assign - Assign comments/guestId/paymentAmount/paymentType/
-    //   showerTime/wakeupTime by id
-    router.post("/:id/assign", async (req, res) => {
+    // POST /:registrationId/assign - Assign comments/guestId/paymentAmount/paymentType/
+    //   showerTime/wakeupTime by registrationId
+    router.post("/:registrationId/assign", async (req, res) => {
         try {
             res.send(await RegistrationServices.assign(req.params.id, req.body));
         } catch (err) {
-            if (err instanceof BadRequest) {
-                res.status(400).send(err.message);
-            } else if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.log("RegistrationEndpoints.assign() error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "RegistrationServices.assign()");
+            res.status(status).send(message);
         }
     })
 
-    // POST /:id/deassign - Deassign model by id
-    router.post("/:id/deassign", async (req, res) => {
+    // POST /:registrationId/deassign - Deassign Registration by registrationId
+    router.post("/:registrationId/deassign", async (req, res) => {
         try {
-            res.send(await RegistrationServices.deassign(req.params.id));
+            res.send(await RegistrationServices.deassign(req.params.registrationId));
         } catch (err) {
-            if (err instanceof BadRequest) {
-                res.status(400).send(err.message);
-            } else if (err instanceof NotFound) {
-                res.status(404).send(err.message);
-            } else {
-                console.log("RegistrationEndpoints.deassign() error: " +
-                    JSON.stringify(err, null, 2));
-                res.status(500).send(err.message);
-            }
+            let [status, message] =
+                FormatErrorResponse(err, "RegistrationServices.find()");
+            res.status(status).send(message);
         }
     })
+
+    // POST /:registrationIdFrom/reassign/:registrationIdTo
+    //   - Move assignment from one Registration to another
+    router.post("/:registrationIdFrom/reassign/:registrationIdTo", async (req, res) => {
+        try {
+            res.send(await RegistrationServices.reassign
+                (req.params.registrationIdFrom, req.params.registrationIdTo));
+        } catch (err) {
+            let [status, message] =
+                FormatErrorResponse(err, "RegistrationServices.reassign()");
+            res.status(status).send(message);
+        }
+    });
 
     // Export Routes ---------------------------------------------------------
 
