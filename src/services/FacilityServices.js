@@ -268,6 +268,23 @@ exports.registrationAll = async (facilityId, queryParameters) => {
     return await facility.getRegistrations(options);
 }
 
+exports.registrationAvailable = async (facilityId, registrationDate, queryParameters) => {
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = appendQueryParameters({
+        order: registrationOrder,
+        where: {
+            guestId: {
+                [Op.eq]: null
+            },
+            registrationDate: registrationDate
+        }
+    }, queryParameters);
+    return await facility.getRegistrations(options);
+}
+
 exports.registrationDate = async (facilityId, registrationDate, queryParameters) => {
     let facility = await Facility.findByPk(facilityId);
     if (!facility) {

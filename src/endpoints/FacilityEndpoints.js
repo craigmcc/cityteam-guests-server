@@ -158,6 +158,19 @@ module.exports = (app) => {
         }
     });
 
+    // GET /:facilityId/registrations/:registrationDate/available
+    //   - Find available Registrations by facilityId and date
+    router.get("/:facilityId/registrations/:registrationDate/available", async (req, res) => {
+        try {
+            res.send(await FacilityServices.registrationAvailable
+                (req.params.facilityId, req.params.registrationDate, req.query));
+        } catch (err) {
+            let [status, message] =
+                FormatErrorResponse(err, "FacilityServices.registrationAvailable()");
+            res.status(status).send(message);
+        }
+    });
+
     // GET /:facilityId/registrations/:registrationDate - Find Registrations by facilityId and date
     router.get("/:facilityId/registrations/:registrationDate", async (req, res) => {
         try {
