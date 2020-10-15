@@ -133,6 +133,7 @@ exports.imported = async (facility, imported) => {
             } else {
                 try {
                     guest = await GuestServices.insert({
+                        active: true,
                         facilityId: facility.id,
                         firstName: capitalize(imported.firstName),
                         lastName: capitalize(imported.lastName)
@@ -350,16 +351,19 @@ const facilityData = [
 
 const guestDataChester = [
     {
+        active: true,
         comments: "Chester Fred Comment",
         firstName: "Fred",
         lastName: "Flintstone"
     },
     {
+        active: true,
         comments: "Chester Barney Comment",
         firstName: "Barney",
         lastName: "Rubble"
     },
     {
+        active: true,
         comments: "Chester Bam Bam Comment",
         firstName: "Bam Bam",
         lastName: "Rubble"
@@ -368,16 +372,19 @@ const guestDataChester = [
 
 const guestDataOakland = [
     {
+        active: true,
         comments: "Oakland Fred Comment",
         firstName: "Fred",
         lastName: "Flintstone"
     },
     {
+        active: true,
         comments: "Oakland Barney Comment",
         firstName: "Barney",
         lastName: "Rubble"
     },
     {
+        active: true,
         comments: "Oakland Bam Bam Comment",
         firstName: "Bam Bam",
         lastName: "Rubble"
@@ -386,11 +393,13 @@ const guestDataOakland = [
 
 const guestDataSanFrancisco = [
     {
+        active: true,
         comments: "San Francisco Fred Comment",
         firstName: "Fred",
         lastName: "Flintstone"
     },
     {
+        active: true,
         comments: "San Francisco Barney Comment",
         firstName: "Barney",
         lastName: "Rubble"
@@ -404,16 +413,19 @@ const guestDataSanFrancisco = [
 
 const guestDataSanJose = [
     {
+        active: true,
         comments: "San Jose Fred Comment",
         firstName: "Fred",
         lastName: "Flintstone"
     },
     {
+        active: true,
         comments: "San Jose Barney Comment",
         firstName: "Barney",
         lastName: "Rubble"
     },
     {
+        active: true,
         comments: "San Jose Bam Bam Comment",
         firstName: "Bam Bam",
         lastName: "Rubble"
@@ -457,6 +469,7 @@ const registrationDataUnassigned = [
 
 const templateDataChester = [
     {
+        active: true,
         allMats: "1-6",
         comments: "Chester COVID Template",
         handicapMats: "1,3",
@@ -464,6 +477,7 @@ const templateDataChester = [
         socketMats: "3,5"
     },
     {
+        active: true,
         allMats: "1-58",
         comments: "Chester Standard Template",
         handicapMats: "1,3",
@@ -473,6 +487,7 @@ const templateDataChester = [
 ]
 const templateDataOakland = [
     {
+        active: true,
         allMats: "1-3,4-6",
         comments: "Oakland COVID Template",
         handicapMats: "1,3",
@@ -480,6 +495,7 @@ const templateDataOakland = [
         socketMats: "3,5"
     },
     {
+        active: true,
         allMats: "1-58",
         comments: "Oakland Standard Template",
         handicapMats: "1,3",
@@ -489,6 +505,7 @@ const templateDataOakland = [
 ]
 const templateDataPortland = [
     {
+        active: true,
         allMats: "1-24",
         comments: "Portland COVID Template",
         handicapMats: "1,9-10,21",
@@ -496,6 +513,7 @@ const templateDataPortland = [
         socketMats: "17-18,22-23"
     },
     {
+        active: true,
         allMats: "1-58",
         comments: "Portland Standard Template",
         handicapMats: "1,9-10,21,30-31,34-35,43,54-55,58",
@@ -505,6 +523,7 @@ const templateDataPortland = [
 ]
 const templateDataSanFrancisco = [
     {
+        active: true,
         allMats: "1-12",
         comments: "San Francisco COVID Template",
         handicapMats: "1,3",
@@ -512,6 +531,7 @@ const templateDataSanFrancisco = [
         socketMats: "3,5"
     },
     {
+        active: true,
         allMats: "1-58",
         comments: "San Francisco Standard Template",
         handicapMats: "1,3",
@@ -521,6 +541,7 @@ const templateDataSanFrancisco = [
 ]
 const templateDataSanJose = [
     {
+        active: true,
         allMats: "1-24",
         comments: "San Jose COVID Template",
         handicapMats: "1,9-10,21",
@@ -528,6 +549,7 @@ const templateDataSanJose = [
         socketMats: "17-18,22-23"
     },
     {
+        active: true,
         allMats: "1-58",
         comments: "San Jose Standard Template",
         handicapMats: "1,9-10,21,30-31,34-35,43,54-55,58",

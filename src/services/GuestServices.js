@@ -11,6 +11,7 @@ const BadRequest = require("../errors/BadRequest");
 const NotFound = require("../errors/NotFound");
 
 const fields = [
+    "active",
     "comments",
     "facilityId",
     "firstName",

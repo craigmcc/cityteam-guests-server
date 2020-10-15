@@ -11,6 +11,7 @@ const NotFound = require("../errors/NotFound");
 
 const fields = [
     "allMats",
+    "active",
     "comments",
     "facilityId",
     "handicapMats",
