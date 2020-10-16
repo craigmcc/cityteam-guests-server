@@ -360,35 +360,37 @@ exports.reassign = async (registrationIdFrom, registrationIdTo) => {
         let registrationTo = await Registration.findByPk(registrationIdTo);
         if (!registrationTo) {
             throw new NotFound(`registrationIdTo: Missing Registration ${registrationIdTo}`);
-        } else if (registrationFrom.guestId) {
+        } else if (registrationTo.guestId) {
             throw new BadRequest(`registrationIdTo: Registration ${registrationIdTo} is already assigned`);
         }
 
-        // Update to registration
-        transaction = await db.sequelize.transaction();
+        // Copy the from assign information to the to registration
         registrationTo.comments = registrationFrom.comments;
         registrationTo.guestId = registrationFrom.guestId;
         registrationTo.paymentAmount = registrationFrom.paymentAmount;
         registrationTo.paymentType = registrationFrom.paymentType;
         registrationTo.showerTime = registrationFrom.showerTime;
         registrationTo.wakeupTime = registrationFrom.wakeupTime;
-        await Registration.update(registrationTo, {
-            fields: fieldsWithId,
-            transaction: transaction,
-            where: { id: registrationIdTo }
-        });
 
-        // Update from registration in the same transaction
+        // Erase the from assign information
         registrationFrom.comments = null;
         registrationFrom.guestId = null;
         registrationFrom.paymentAmount = null;
         registrationFrom.paymentType = null;
         registrationFrom.showerTime = null;
         registrationFrom.wakeupTime = null;
-        await Registration.update(registrationFrom, {
+
+        // Perform both updates in the same transaction
+        transaction = await db.sequelize.transaction();
+        await Registration.update(registrationFrom.dataValues, {
             fields: fieldsWithId,
             transaction: transaction,
             where: { id: registrationIdFrom }
+        });
+        await Registration.update(registrationTo.dataValues, {
+            fields: fieldsWithId,
+            transaction: transaction,
+            where: { id: registrationIdTo }
         });
 
         // Commit the transaction and return the updated to registration
