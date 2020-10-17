@@ -155,7 +155,7 @@ exports.update = async (facilityId, data) => {
         }
         await transaction.commit();
         transaction = null;
-        return Facility.findByPk(facilityId);
+        return await Facility.findByPk(facilityId);
     } catch (err) {
         if (transaction) {
             await transaction.rollback();

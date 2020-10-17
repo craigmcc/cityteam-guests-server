@@ -91,7 +91,7 @@ exports.update = async (id, data) => {
         }
         await transaction.commit();
         transaction = null;
-        return Ban.findByPk(id);
+        return await Ban.findByPk(id);
     } catch (err) {
         if (transaction) {
             await transaction.rollback();

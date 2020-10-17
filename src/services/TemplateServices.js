@@ -142,7 +142,7 @@ exports.update = async (templateId, data) => {
         }
         await transaction.commit();
         transaction = null;
-        return Template.findByPk(templateId);
+        return await Template.findByPk(templateId);
     } catch (err) {
         if (transaction) {
             await transaction.rollback();

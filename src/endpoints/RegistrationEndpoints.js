@@ -78,7 +78,7 @@ module.exports = (app) => {
     //   showerTime/wakeupTime by registrationId
     router.post("/:registrationId/assign", async (req, res) => {
         try {
-            res.send(await RegistrationServices.assign(req.params.id, req.body));
+            res.send(await RegistrationServices.assign(req.params.registrationId, req.body));
         } catch (err) {
             let [status, message] =
                 FormatErrorResponse(err, "RegistrationServices.assign()");

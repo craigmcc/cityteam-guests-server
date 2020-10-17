@@ -149,7 +149,7 @@ exports.update = async (registrationId, data) => {
         }
         await transaction.commit();
         transaction = null;
-        return Registration.findByPk(registrationId);
+        return await Registration.findByPk(registrationId);
     } catch (err) {
         if (transaction) {
             await transaction.rollback();
