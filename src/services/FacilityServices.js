@@ -299,6 +299,80 @@ exports.registrationDate = async (facilityId, registrationDate, queryParameters)
     return await facility.getRegistrations(options);
 }
 
+exports.registrationSummary = async (facilityId, registrationDateFrom, registrationDateTo) => {
+
+    // Retrieve the relevant registrations
+    let facility = await Facility.findByPk(facilityId);
+    if (!facility) {
+        throw new NotFound(`facilityId: Missing Facility ${facilityId}`);
+    }
+    let options = {
+        order: registrationOrder,
+        where: {
+            registrationDate: {
+                [Op.and]: {
+                    [Op.gte]: registrationDateFrom,
+                    [Op.lte]: registrationDateTo
+                }
+            }
+        }
+    };
+    let registrations = await facility.getRegistrations(options);
+
+    // Summarize and return them
+    let summaries = [];
+    let summary = null;
+    registrations.map(registration => {
+            if (summary && (summary.registrationDate != registration.registrationDate)) {
+                summaries.push(summary);
+                summary = null;
+            }
+            if (!summary) {
+                summary = {
+                    facilityId: registration.facilityId,
+                    registrationDate: registration.registrationDate,
+                    total$$: 0,
+                    totalAG: 0,
+                    totalCT: 0,
+                    totalFM: 0,
+                    totalMM: 0,
+                    totalSW: 0,
+                    totalUK: 0,
+                    totalAmount: 0.00,
+                    totalAssigned: 0,
+                    totalUnassigned: 0,
+                }
+            }
+            if (registration.guestId) {
+                summary.totalAssigned++;
+            } else {
+                summary.totalUnassigned++;
+            }
+            if (registration.paymentAmount) {
+                summary.totalAmount += new Number(registration.paymentAmount);
+            }
+            if (registration.paymentType) {
+                switch (registration.paymentType) {
+                    case "$$": summary.total$$++; break;
+                    case "AG": summary.totalAG++; break;
+                    case "CT": summary.totalCT++; break;
+                    case "FM": summary.totalFM++; break;
+                    case "MM": summary.totalMM++; break;
+                    case "SW": summary.totalSW++; break;
+                    case "UK": summary.totalUK++; break;
+                    default:
+                        console.error("Bad registration.paymentType: "
+                            + JSON.stringify(registration, ["id", "facilityId", "matNumber", "paymentType"]));
+                }
+            }
+        });
+    if (summary) {
+        summaries.push(summary);
+    }
+    return summaries;
+
+}
+
 // ***** Facility-Template Relationships (One:Many) *****
 
 exports.templateAll = async (facilityId, queryParameters) => {

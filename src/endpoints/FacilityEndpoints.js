@@ -183,6 +183,20 @@ module.exports = (app) => {
         }
     });
 
+    // GET /:facilityId/registrations/summary/:registrationDateFrom/:registrationDateTo
+    //   - Return summaries of registrations within the specified date range
+    router.get("/:facilityId/registrations/summary/:registrationDateFrom/:registrationDateTo",
+        async (req, res) => {
+            try {
+                res.send(await FacilityServices.registrationSummary
+                    (req.params.facilityId, req.params.registrationDateFrom, req.params.registrationDateTo));
+            } catch (err) {
+                let [status, message] =
+                    FormatErrorResponse(err, "FacilityServices.registrationDate()");
+                res.status(status).send(message);
+            }
+        })
+
     // ***** Facility-Template Relationships *****
 
     // GET /:facilityId/templates - Find Templates by facilityId
