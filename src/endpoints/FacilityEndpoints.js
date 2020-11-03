@@ -211,7 +211,7 @@ module.exports = (app) => {
     });
 
     // GET /:facilityId/templates/exact/:name - Find Templates by facilityId and name
-    router.get("/:facilityId/templates/name/:name", async (req, res) => {
+    router.get("/:facilityId/templates/exact/:name", async (req, res) => {
         try {
             res.send(await FacilityServices.templateExact
                 (req.params.facilityId, req.params.name, req.query));

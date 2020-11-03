@@ -415,6 +415,6 @@ exports.templateName = async (facilityId, name, queryParameters) => {
             name: { [Op.iLike]: `%${name}%` }
         }
     }, queryParameters);
-    return await facility.getGuests(options);
+    return await facility.getTemplates(options);
 }
 
