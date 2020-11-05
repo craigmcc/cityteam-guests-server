@@ -1,7 +1,11 @@
 {
   "name": "cityteam-guests-server",
   "version": "1.0.0",
-  "description": "CityTeam Guests API Server (Node.JS+Express+PostgreSQL)",
+  "private": true,
+  "author": "craigmcc",
+  "description": "CityTeam Guests Checkin Application (Server)",
+  "keywords": [ "javascript", "node", "express", "postgres", "sequelize"],
+  "license": "Apache-2.0",
   "main": "server.js",
   "scripts": {
     "start-prod": "NODE_ENV=production node server",
@@ -13,8 +17,6 @@
     "guests",
     "server"
   ],
-  "author": "craigmcc",
-  "license": "Apache-2.0",
   "dependencies": {
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
