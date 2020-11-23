@@ -283,7 +283,8 @@ exports.generate = async (templateId, registrationDate) => {
     }
     let allMats = new MatsList(template.allMats);
     let handicapMats = template.handicapMats ? new MatsList(template.handicapMats) : null;
-    let socketMaps = template.socketMats ? new MatsList(template.socketMats) : null;
+    let socketMats = template.socketMats ? new MatsList(template.socketMats) : null;
+    let workMats = template.workMats ? new MatsList(template.workMats) : null;
 
     // Verify that there are no registrations for this combination already
     let conditions = {
@@ -306,9 +307,13 @@ exports.generate = async (templateId, registrationDate) => {
         if (handicapMats && handicapMats.isMemberOf(matNumber)) {
             features = features + "H";
         }
-        if (socketMaps && socketMaps.isMemberOf(matNumber)) {
+        if (socketMats && socketMats.isMemberOf(matNumber)) {
             features = features + "S";
         }
+        if (workMats && workMats.isMemberOf(matNumber)) {
+            features = features + "W";
+        }
+        if (work)
         if (features.length === 0) {
             features = null;
         }

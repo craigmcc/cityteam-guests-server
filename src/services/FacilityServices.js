@@ -338,6 +338,7 @@ exports.registrationSummary = async (facilityId, registrationDateFrom, registrat
                     totalMM: 0,
                     totalSW: 0,
                     totalUK: 0,
+                    totalWB: 0,
                     totalAmount: 0.00,
                     totalAssigned: 0,
                     totalUnassigned: 0,
@@ -360,6 +361,7 @@ exports.registrationSummary = async (facilityId, registrationDateFrom, registrat
                     case "MM": summary.totalMM++; break;
                     case "SW": summary.totalSW++; break;
                     case "UK": summary.totalUK++; break;
+                    case "WB": summary.totalWB++; break;
                     default:
                         console.error("Bad registration.paymentType: "
                             + JSON.stringify(registration, ["id", "facilityId", "matNumber", "paymentType"]));

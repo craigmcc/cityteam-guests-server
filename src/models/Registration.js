@@ -13,8 +13,8 @@ const { DataTypes, Model, Op } = require("sequelize");
 
 module.exports = (sequelize) => {
 
-    const features = [ "H", "S", "HS", "SH" ];
-    const paymentTypes = [ "$$", "AG", "CT", "FM", "MM", "SW", "UK" ];
+    const features = [ "H", "S", "HS", "SH", "W" ];
+    const paymentTypes = [ "$$", "AG", "CT", "FM", "MM", "SW", "UK", "WB" ];
 
     class Registration extends Model {
     }

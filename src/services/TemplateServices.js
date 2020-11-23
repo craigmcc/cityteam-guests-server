@@ -17,6 +17,7 @@ const fields = [
     "handicapMats",
     "name",
     "socketMats",
+    "workMats",
 ];
 const fieldsWithId = [...fields, "id"];
 

@@ -14,6 +14,7 @@ const fields = [
     "active",
     "comments",
     "facilityId",
+    "favorite",
     "firstName",
     "lastName",
 ];

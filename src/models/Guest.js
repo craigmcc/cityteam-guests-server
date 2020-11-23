@@ -56,6 +56,12 @@ module.exports = (sequelize) => {
             }
         },
 
+        favorite: { // Favorite mat number
+            allowNull: true,
+            field: "favorite",
+            type: DataTypes.INTEGER
+        },
+
         firstName: {
             allowNull: false,
             field: "firstname",

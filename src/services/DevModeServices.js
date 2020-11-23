@@ -510,7 +510,8 @@ const templateDataPortland = [
         comments: "Portland COVID Template",
         handicapMats: "1,9-10,21",
         name: "Portland COVID",
-        socketMats: "17-18,22-23"
+        socketMats: "17-18,22-23",
+        workMats: "6-7"
     },
     {
         active: true,
@@ -518,7 +519,8 @@ const templateDataPortland = [
         comments: "Portland Standard Template",
         handicapMats: "1,9-10,21,30-31,34-35,43,54-55,58",
         name: "Portland Standard",
-        socketMats: "17-18,22-23,30-31,36-37,42,53-54,57-58"
+        socketMats: "17-18,22-23,30-31,36-37,42,53-54,57-58",
+        workMats: "6-7"
     }
 ]
 const templateDataSanFrancisco = [

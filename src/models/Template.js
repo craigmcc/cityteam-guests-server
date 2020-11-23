@@ -124,6 +124,23 @@ module.exports = (sequelize) => {
             }
         },
 
+        workMats: {
+            allowNull: true,
+            field: "workmats",
+            type: DataTypes.STRING,
+            validate: {
+                isSocketMatsValid: function(value) {
+                    if (value) {
+                        try {
+                            new MatsList(value);
+                        } catch (err) {
+                            throw err;
+                        }
+                    }
+                }
+            }
+        },
+
     }, {
 
         createdAt: "published",
