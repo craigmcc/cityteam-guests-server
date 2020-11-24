@@ -313,7 +313,6 @@ exports.generate = async (templateId, registrationDate) => {
         if (workMats && workMats.isMemberOf(matNumber)) {
             features = features + "W";
         }
-        if (work)
         if (features.length === 0) {
             features = null;
         }
