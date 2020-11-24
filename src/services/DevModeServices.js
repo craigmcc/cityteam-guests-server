@@ -165,7 +165,7 @@ exports.imported = async (facility, imported) => {
             } else {
                 result.problems.push({
                     message:
-                        `Cannot parse valid features from '${imported.paymentType}'`,
+                        `Cannot parse valid payment type from '${imported.paymentType}'`,
                     imported: imported,
                     resolution: "Setting features to UK (unknown)"
                 });
@@ -622,5 +622,5 @@ let loadTemplates = async (facilityName, templateData) => {
     }
 }
 
-const validFeatures = ["H", "S", "HS", "SH"];
-const validPaymentTypes = [ "$$", "AG", "CT", "FM", "MM", "SW", "UK" ];
+const validFeatures = ["H", "S", "HS", "SH", "W"];
+const validPaymentTypes = [ "$$", "AG", "CT", "FM", "MM", "SW", "UK", "WB" ];
