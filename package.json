@@ -4,22 +4,22 @@
   "private": true,
   "author": "craigmcc",
   "description": "CityTeam Guests Checkin Application (Server)",
-  "keywords": [ "javascript", "node", "express", "postgres", "sequelize"],
-  "license": "Apache-2.0",
-  "main": "server.js",
-  "scripts": {
-    "start-prod": "NODE_ENV=production node server",
-    "start-test": "NODE_ENV=development node server",
-    "test": "NODE_ENV=development mocha --recursive"
-  },
   "keywords": [
     "cityteam",
     "guests",
     "server"
   ],
+  "license": "Apache-2.0",
+  "main": "server.js",
+  "scripts": {
+    "start-prod": "cross-env NODE_ENV=production node server",
+    "start-test": "cross-env NODE_ENV=development node server",
+    "test": "cross-env NODE_ENV=development mocha --recursive"
+  },
   "dependencies": {
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.2",
     "csvtojson": "^2.0.10",
     "custom-env": "^2.0.1",
     "express": "^4.17.1",
